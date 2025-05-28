@@ -8,25 +8,25 @@ const API = `${BACKEND_URL}/api`;
 function App() {
   const [formData, setFormData] = useState({
     personal: {
-      vorname: "Jeremy",
-      nachname: "Hayen", 
-      alter: 30,
-      email: "jeremyhayen2007@yahoo.com",
-      telefon: "732874628491249",
-      adresse: "Eckenweg 23, 87163 Washington, D.C."
+      vorname: "",
+      nachname: "", 
+      alter: "",
+      email: "",
+      telefon: "",
+      adresse: ""
     },
     qualifications: {
-      position: "die beste",
-      ausbildung: "fertig",
-      berufserfahrung: "keine", 
-      staerken: "die besten",
-      sprachen: "alle sprachen",
-      motivation: "Geld"
+      position: "",
+      ausbildung: "",
+      berufserfahrung: "", 
+      staerken: "",
+      sprachen: "",
+      motivation: ""
     },
     company: {
-      firmenname: "ZENEX",
-      ansprechpartner: "Frau Schmidt",
-      firmenadresse: "Moneyweg 99, 46556 München"
+      firmenname: "",
+      ansprechpartner: "",
+      firmenadresse: ""
     },
     stil: "Formell",
     gdpr_consent: false
