@@ -146,7 +146,7 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "anthropic/claude-3-5-sonnet-20241022",
+                    "model": "anthropic/claude-3-sonnet",
                     "messages": [
                         {
                             "role": "user",
