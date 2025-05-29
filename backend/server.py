@@ -147,7 +147,7 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "mistralai/mixtral-8x7b-instruct",
+                    "model": "deepseek/deepseek-coder:free",
                     "messages": [
                         {
                             "role": "user",
