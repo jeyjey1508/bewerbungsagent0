@@ -59,6 +59,8 @@ function App() {
 
     try {
       const response = await axios.post(`${API}/generate-application`, formData);
+      console.log("Antwort von Backend:", response.data);
+
       setGeneratedApplication(response.data.bewerbungstext);
     } catch (err) {
       setError("Fehler beim Generieren der Bewerbung: " + (err.response?.data?.detail || err.message));
