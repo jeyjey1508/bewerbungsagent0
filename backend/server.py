@@ -135,6 +135,7 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
 
     try:
         openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
+        print("DEBUG: OPENROUTER_API_KEY =", openrouter_api_key)
         if not openrouter_api_key:
             raise HTTPException(status_code=500, detail="OpenRouter API key not configured")
 
