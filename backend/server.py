@@ -90,13 +90,8 @@ from starlette.concurrency import run_in_threadpool
 
 async def generate_application_with_google_gemini(request: ApplicationRequest) -> str:
     try:
-        genai.configure(
-        api_key=os.environ["GOOGLE_API_KEY"],
-        api_endpoint="https://generativelanguage.googleapis.com/v1/"
-    )
-
-
-        model = genai.GenerativeModel(model_name="models/gemini-pro")
+        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+        model = genai.GenerativeModel("gemini-pro")
 
         style_instructions = {
             "Formell": "sehr formal und traditionell, mit klassischen Formulierungen",
@@ -147,6 +142,7 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
 
 
 
