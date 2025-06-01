@@ -86,19 +86,23 @@ async def get_status_checks():
     return [StatusCheck(**status_check) for status_check in status_checks]
 
 import google.generativeai as genai
+from starlette.concurrency import run_in_threadpool
 
 async def generate_application_with_google_gemini(request: ApplicationRequest) -> str:
-    """Generate a professional German job application using Google Gemini API"""
-    
-    style_instructions = {
-        "Formell": "sehr formal und traditionell, mit klassischen Formulierungen",
-        "Kreativ": "kreativ und modern, aber trotzdem professionell",
-        "Locker": "freundlich und persönlich, aber respektvoll"
-    }
-    
-    style = style_instructions.get(request.stil, style_instructions["Formell"])
-    
-    prompt = f"""
+    try:
+        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+        model = genai.GenerativeModel(model_name="models/gemini-pro")
+
+        style_instructions = {
+            "Formell": "sehr formal und traditionell, mit klassischen Formulierungen",
+            "Kreativ": "kreativ und modern, aber trotzdem professionell",
+            "Locker": "freundlich und persönlich, aber respektvoll"
+        }
+
+        style = style_instructions.get(request.stil, style_instructions["Formell"])
+
+        prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein professionelles Bewerbungsschreiben auf Deutsch im {style}en Stil.
 
 PERSÖNLICHE DATEN:
@@ -133,19 +137,14 @@ ANWEISUNGEN:
 Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
 """
 
-    try:
-        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-
-        model = genai.GenerativeModel(model_name="models/gemini-pro")
-        from starlette.concurrency import run_in_threadpool
-
         response = await run_in_threadpool(model.generate_content, prompt)
         return response.text.strip()
 
-    
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
+
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
