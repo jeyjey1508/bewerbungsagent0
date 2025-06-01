@@ -85,7 +85,7 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-import google.generativeai as genai  # ganz oben im File, falls noch nicht vorhanden
+import google.generativeai as genai
 
 async def generate_application_with_google_gemini(request: ApplicationRequest) -> str:
     """Generate a professional German job application using Google Gemini API"""
@@ -134,13 +134,20 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
 """
 
     try:
-        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-        model = genai.GenerativeModel(model_name="models/gemini-pro")
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        genai.configure(
+            api_key=os.environ["GOOGLE_API_KEY"],
+            transport="rest",
+            api_endpoint="https://generativelanguage.googleapis.com/v1/"
+        )
 
+        model = genai.GenerativeModel(model_name="gemini-pro")
+        from starlette.concurrency import run_in_threadpool
+
+        response = await run_in_threadpool(model.generate_content, prompt)
 
         
+        return response.text.strip()
+    
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
