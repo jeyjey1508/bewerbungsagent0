@@ -85,11 +85,11 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-# AI-powered application generation
-async def generate_application_with_openrouter(request: ApplicationRequest) -> str:
-    """Generate a professional German job application using OpenRouter API"""
+import google.generativeai as genai  # ganz oben im File, falls noch nicht vorhanden
+
+async def generate_application_with_google_gemini(request: ApplicationRequest) -> str:
+    """Generate a professional German job application using Google Gemini API"""
     
-    # Create a comprehensive German prompt based on the style
     style_instructions = {
         "Formell": "sehr formal und traditionell, mit klassischen Formulierungen",
         "Kreativ": "kreativ und modern, aber trotzdem professionell",
@@ -125,7 +125,7 @@ ANWEISUNGEN:
 1. Erstelle ein vollständiges Bewerbungsschreiben auf Deutsch
 2. Verwende eine professionelle Struktur mit Briefkopf, Anrede, Hauptteil und Schluss
 3. Stil: {style}
-4. Berücksichtige auch ungewöhnliche Eingaben intelligent (z.B. wenn jemand "Geld" als Motivation angibt, formuliere das professioneller um)
+4. Berücksichtige auch ungewöhnliche Eingaben intelligent (z. B. „Geld“ als Motivation professionell umformulieren)
 5. Das Schreiben soll authentisch und überzeugend wirken
 6. Verwende deutsche Geschäftsbriefkonventionen
 7. Füge realistische Details hinzu, wenn nötig
@@ -134,43 +134,11 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
 """
 
     try:
-        openrouter_api_key = os.environ.get('OPENROUTER_API_KEY')
-        print("DEBUG: OPENROUTER_API_KEY =", openrouter_api_key)
-        if not openrouter_api_key:
-            raise HTTPException(status_code=500, detail="OpenRouter API key not configured")
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {openrouter_api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "deepseek/deepseek-coder:free",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "max_tokens": 2000,
-                    "temperature": 0.7
-                },
-                timeout=30.0
-            )
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            if 'choices' in result and len(result['choices']) > 0:
-                return result['choices'][0]['message']['content']
-            else:
-                raise HTTPException(status_code=500, detail="Invalid response from OpenRouter API")
-                
-    except httpx.HTTPError as e:
-        logging.error(f"OpenRouter API error: {e}")
-        raise HTTPException(status_code=500, detail=f"Error calling OpenRouter API: {str(e)}")
+        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(prompt)
+        return response.text.strip()
+        
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
@@ -184,7 +152,7 @@ async def generate_application(request: ApplicationRequest):
     
     try:
         # Generate the application text using AI
-        bewerbungstext = await generate_application_with_openrouter(request)
+        bewerbungstext = await generate_application_with_google_gemini(request)
         
         # Create response object
         application_response = ApplicationResponse(
