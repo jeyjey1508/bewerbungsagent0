@@ -135,10 +135,10 @@ Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
 
     try:
         genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-        model = genai.GenerativeModel("gemini-pro")
-        chat = model.start_chat()
-        response = chat.send_message(prompt)
+        model = genai.GenerativeModel(model_name="models/gemini-pro")
+        response = model.generate_content(prompt)
         return response.text.strip()
+
 
         
     except Exception as e:
