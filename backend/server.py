@@ -85,24 +85,12 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-import google.generativeai as genai
-from starlette.concurrency import run_in_threadpool
+import httpx
+import os
 
-async def generate_application_with_google_gemini(request: ApplicationRequest) -> str:
-    try:
-        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-        model = genai.GenerativeModel("gemini-pro")
-
-        style_instructions = {
-            "Formell": "sehr formal und traditionell, mit klassischen Formulierungen",
-            "Kreativ": "kreativ und modern, aber trotzdem professionell",
-            "Locker": "freundlich und persönlich, aber respektvoll"
-        }
-
-        style = style_instructions.get(request.stil, style_instructions["Formell"])
-
-        prompt = f"""
-Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein professionelles Bewerbungsschreiben auf Deutsch im {style}en Stil.
+async def generate_application_with_claude(request: ApplicationRequest) -> str:
+    prompt = f"""
+Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
@@ -124,61 +112,31 @@ FIRMENDATEN:
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
 
-ANWEISUNGEN:
-1. Erstelle ein vollständiges Bewerbungsschreiben auf Deutsch
-2. Verwende eine professionelle Struktur mit Briefkopf, Anrede, Hauptteil und Schluss
-3. Stil: {style}
-4. Berücksichtige auch ungewöhnliche Eingaben intelligent (z. B. „Geld“ als Motivation professionell umformulieren)
-5. Das Schreiben soll authentisch und überzeugend wirken
-6. Verwende deutsche Geschäftsbriefkonventionen
-7. Füge realistische Details hinzu, wenn nötig
-
-Erstelle NUR das Bewerbungsschreiben, keine zusätzlichen Kommentare.
+Erstelle nur den Bewerbungstext.
 """
 
-        response = await run_in_threadpool(model.generate_content, prompt)
-        return response.text.strip()
+    try:
+        headers = {
+            "Authorization": f"Bearer {os.environ['ANTHROPIC_API_KEY']}",
+            "Content-Type": "application/json"
+        }
+        json_data = {
+            "model": "claude-3-sonnet-20240229",
+            "max_tokens": 1000,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.7
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post("https://api.anthropic.com/v1/messages", headers=headers, json=json_data)
+
+        response.raise_for_status()
+        return response.json()["content"][0]["text"].strip()
 
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
-
-
-
-@api_router.post("/generate-application", response_model=ApplicationResponse)
-async def generate_application(request: ApplicationRequest):
-    """Generate a professional German job application"""
-    
-    if not request.gdpr_consent:
-        raise HTTPException(status_code=400, detail="GDPR consent is required")
-    
-    try:
-        # Generate the application text using AI
-        bewerbungstext = await generate_application_with_google_gemini(request)
-        
-        # Create response object
-        application_response = ApplicationResponse(
-            id=str(uuid.uuid4()),
-            bewerbungstext=bewerbungstext,
-            created_at=datetime.utcnow()
-        )
-        
-        # Optional: Save to database
-        application_dict = application_response.dict()
-        application_dict.update({
-            "personal_data": request.personal.dict(),
-            "qualifications": request.qualifications.dict(),
-            "company_data": request.company.dict(),
-            "stil": request.stil
-        })
-        await db.applications.insert_one(application_dict)
-        
-        return application_response
-        
-    except Exception as e:
-        logging.error(f"Application generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 # Include the router in the main app
 app.include_router(api_router)
@@ -201,3 +159,36 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+@api_router.post("/generate-application", response_model=ApplicationResponse)
+async def generate_application(request: ApplicationRequest):
+    """Generate a professional German job application"""
+
+    if not request.gdpr_consent:
+        raise HTTPException(status_code=400, detail="GDPR consent is required")
+
+    try:
+        bewerbungstext = await generate_application_with_claude(request)
+
+        application_response = ApplicationResponse(
+            id=str(uuid.uuid4()),
+            bewerbungstext=bewerbungstext,
+            created_at=datetime.utcnow()
+        )
+
+        # Optional: Save to database
+        application_dict = application_response.dict()
+        application_dict.update({
+            "personal_data": request.personal.dict(),
+            "qualifications": request.qualifications.dict(),
+            "company_data": request.company.dict(),
+            "stil": request.stil
+        })
+        await db.applications.insert_one(application_dict)
+
+        return application_response
+
+    except Exception as e:
+        logging.error(f"Application generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
