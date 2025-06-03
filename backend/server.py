@@ -85,10 +85,9 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-import httpx
-import os
+import openai
 
-async def generate_application_with_claude(request: ApplicationRequest) -> str:
+async def generate_application_with_openai(request: ApplicationRequest) -> str:
     prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}
 
@@ -116,26 +115,24 @@ Erstelle nur den Bewerbungstext.
 """
 
     try:
-        headers = {
-            "Authorization": f"Bearer {os.environ['ANTHROPIC_API_KEY']}",
-            "Content-Type": "application/json"
-        }
-        json_data = {
-            "model": "claude-3-sonnet-20240229",
-            "max_tokens": 1000,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.7
-        }
+        openai.api_key = os.environ["OPENAI_API_KEY"]
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post("https://api.anthropic.com/v1/messages", headers=headers, json=json_data)
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-4",  # oder "gpt-3.5-turbo" falls günstiger
+            messages=[
+                {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1000
+        )
 
-        response.raise_for_status()
-        return response.json()["content"][0]["text"].strip()
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
 
 
 # Include the router in the main app
@@ -168,7 +165,7 @@ async def generate_application(request: ApplicationRequest):
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        bewerbungstext = await generate_application_with_claude(request)
+        bewerbungstext = await generate_application_with_openai(request)
 
         application_response = ApplicationResponse(
             id=str(uuid.uuid4()),
