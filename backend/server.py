@@ -85,7 +85,10 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-import openai
+from openai import AsyncOpenAI
+
+# API-Key über Umgebungsvariable
+client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 async def generate_application_with_openai(request: ApplicationRequest) -> str:
     prompt = f"""
@@ -115,10 +118,8 @@ Erstelle nur den Bewerbungstext.
 """
 
     try:
-        openai.api_key = os.environ["OPENAI_API_KEY"]
-
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-4",  # oder "gpt-3.5-turbo" falls günstiger
+        response = await client.chat.completions.create(
+            model="gpt-4",  # oder gpt-3.5-turbo
             messages=[
                 {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
                 {"role": "user", "content": prompt}
@@ -132,6 +133,7 @@ Erstelle nur den Bewerbungstext.
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
 
 
 
