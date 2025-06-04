@@ -120,7 +120,7 @@ Erstelle nur den Bewerbungstext.
 
     try:
         response = await openai_client.chat.completions.create(
-            model="gpt-4",  # Nutze "gpt-3.5-turbo" wenn kein Zugang zu GPT-4
+            model="gpt-3.5-turbo",  # Nutze "gpt-3.5-turbo" wenn kein Zugang zu GPT-4
             messages=[
                 {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
                 {"role": "user", "content": prompt}
