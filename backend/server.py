@@ -6,26 +6,28 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List
 import uuid
 from datetime import datetime
-import httpx
+from openai import AsyncOpenAI
 
+# Load .env
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / ".env")
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+# MongoDB
+mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ["DB_NAME"]]
 
-# Create the main app without a prefix
+# OpenAI client
+openai_client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+# FastAPI app
 app = FastAPI()
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Models for application generation
+# Models
 class PersonalData(BaseModel):
     vorname: str
     nachname: str
@@ -51,7 +53,7 @@ class ApplicationRequest(BaseModel):
     personal: PersonalData
     qualifications: Qualifications
     company: CompanyData
-    stil: str = "Formell"  # Formell, Kreativ, Locker
+    stil: str = "Formell"
     gdpr_consent: bool
 
 class ApplicationResponse(BaseModel):
@@ -59,7 +61,6 @@ class ApplicationResponse(BaseModel):
     bewerbungstext: str
     created_at: datetime
 
-# Existing models
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
@@ -68,27 +69,21 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Existing routes
+# Routes
 @api_router.get("/")
 async def root():
     return {"message": "Bewerbungsgenerator API - Ready!"}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+    obj = StatusCheck(**input.dict())
+    await db.status_checks.insert_one(obj.dict())
+    return obj
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
-
-from openai import AsyncOpenAI
-
-# API-Key über Umgebungsvariable
-client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    result = await db.status_checks.find().to_list(1000)
+    return [StatusCheck(**entry) for entry in result]
 
 async def generate_application_with_openai(request: ApplicationRequest) -> str:
     prompt = f"""
@@ -118,8 +113,8 @@ Erstelle nur den Bewerbungstext.
 """
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4",  # oder gpt-3.5-turbo
+        response = await openai_client.chat.completions.create(
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
                 {"role": "user", "content": prompt}
@@ -127,67 +122,58 @@ Erstelle nur den Bewerbungstext.
             temperature=0.7,
             max_tokens=1000
         )
-
         return response.choices[0].message.content.strip()
 
     except Exception as e:
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
-
-
-
-# Include the router in the main app
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["https://bewerbungsagent0.onrender.com"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
-
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
-    """Generate a professional German job application"""
-
     if not request.gdpr_consent:
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        bewerbungstext = await generate_application_with_openai(request)
-
-        application_response = ApplicationResponse(
+        text = await generate_application_with_openai(request)
+        result = ApplicationResponse(
             id=str(uuid.uuid4()),
-            bewerbungstext=bewerbungstext,
+            bewerbungstext=text,
             created_at=datetime.utcnow()
         )
 
-        # Optional: Save to database
-        application_dict = application_response.dict()
-        application_dict.update({
+        data = result.dict()
+        data.update({
             "personal_data": request.personal.dict(),
             "qualifications": request.qualifications.dict(),
             "company_data": request.company.dict(),
             "stil": request.stil
         })
-        await db.applications.insert_one(application_dict)
-
-        return application_response
+        await db.applications.insert_one(data)
+        return result
 
     except Exception as e:
         logging.error(f"Application generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
+# 🔄 Include all routes
+app.include_router(api_router)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://bewerbungsagent0.onrender.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Shutdown cleanup
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    client.close()
+
+# Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
