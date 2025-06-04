@@ -113,8 +113,8 @@ Erstelle nur den Bewerbungstext.
 """
 
     try:
-        response = await openai_client.chat.completions.create(
-            model="gpt-4",
+        response = await client.chat.completions.create(
+            model="gpt-3.5-turbo",  # <== hier ändern
             messages=[
                 {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
                 {"role": "user", "content": prompt}
@@ -122,7 +122,7 @@ Erstelle nur den Bewerbungstext.
             temperature=0.7,
             max_tokens=1000
         )
-        return response.choices[0].message.content.strip()
+
 
     except Exception as e:
         logging.error(f"Application generation error: {e}")
