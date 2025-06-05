@@ -88,10 +88,9 @@ async def get_status_checks():
     docs = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**doc) for doc in docs]
 
-async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
-    from cerebras import Cerebras
-    import asyncio
+import httpx
 
+async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 
@@ -118,26 +117,29 @@ FIRMENDATEN:
 Erstelle nur den Bewerbungstext.
 """
 
+    headers = {
+        "Authorization": f"Bearer {os.environ['CEREBRAS_API_KEY']}",
+        "Content-Type": "application/json"
+    }
+
+    body = {
+        "model": "llama-4-scout-17b-16e-instruct",
+        "stream": False,
+        "max_tokens": 2048,
+        "temperature": 0.7,
+        "top_p": 1,
+        "messages": [
+            {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
     try:
-        client = Cerebras(api_key=os.environ["CEREBRAS_API_KEY"])
-        stream = client.chat.completions.create(
-            model="llama-4-scout-17b-16e-instruct",
-            stream=True,
-            max_completion_tokens=2048,
-            temperature=0.7,
-            top_p=1,
-            messages=[
-                {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
-                {"role": "user", "content": prompt}
-            ]
-        )
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
 
-        result = []
-
-        async for chunk in stream:
-            result.append(chunk.choices[0].delta.content or "")
-
-        return "".join(result).strip()
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
 
     except Exception as e:
         logging.error(f"Application generation error: {e}")
