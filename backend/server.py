@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
+from cerebras import Cerebras
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -87,13 +88,12 @@ async def get_status_checks():
     docs = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**doc) for doc in docs]
 
-# === OpenAI Integration ===
-from openai import AsyncOpenAI
-openai_client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
+    from cerebras import Cerebras
+    import asyncio
 
-async def generate_application_with_openai(request: ApplicationRequest) -> str:
     prompt = f"""
-Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}
+Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
@@ -119,20 +119,30 @@ Erstelle nur den Bewerbungstext.
 """
 
     try:
-        response = await openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Nutze "gpt-3.5-turbo" wenn kein Zugang zu GPT-4
+        client = Cerebras(api_key=os.environ["CEREBRAS_API_KEY"])
+        stream = client.chat.completions.create(
+            model="llama-4-scout-17b-16e-instruct",
+            stream=True,
+            max_completion_tokens=2048,
+            temperature=0.7,
+            top_p=1,
             messages=[
                 {"role": "system", "content": "Du bist ein professioneller Bewerbungsschreiber."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=1000
+            ]
         )
-        return response.choices[0].message.content.strip()
+
+        result = []
+
+        async for chunk in stream:
+            result.append(chunk.choices[0].delta.content or "")
+
+        return "".join(result).strip()
 
     except Exception as e:
-        logger.error(f"Application generation error: {e}")
+        logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
@@ -140,7 +150,7 @@ async def generate_application(request: ApplicationRequest):
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        bewerbungstext = await generate_application_with_openai(request)
+        bewerbungstext = await generate_application_with_cerebras(request)
 
         response_obj = ApplicationResponse(
             id=str(uuid.uuid4()),
