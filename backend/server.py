@@ -9,6 +9,10 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 import httpx
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -100,7 +104,6 @@ FIRMENDATEN:
 Gib nur den formatierten Bewerbungstext im DIN-5008-Stil zurück.
 """
 
-
     headers = {
         "Authorization": f"Bearer {os.environ['CEREBRAS_API_KEY']}",
         "Content-Type": "application/json"
@@ -129,6 +132,44 @@ Gib nur den formatierten Bewerbungstext im DIN-5008-Stil zurück.
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
+def generate_pdf_din5008(request: ApplicationRequest, text: str):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    absender_x = 350
+    absender_y = height - 40
+    empfaenger_x = 50
+    empfaenger_y = height - 120
+    datum_x = 350
+    datum_y = empfaenger_y - 40
+    betreff_y = datum_y - 60
+    text_y = betreff_y - 40
+
+    c.drawString(absender_x, absender_y, f"{request.personal.vorname} {request.personal.nachname}")
+    c.drawString(absender_x, absender_y - 15, request.personal.adresse)
+    c.drawString(absender_x, absender_y - 30, request.personal.email)
+    c.drawString(absender_x, absender_y - 45, request.personal.telefon)
+
+    c.drawString(empfaenger_x, empfaenger_y, request.company.firmenname)
+    c.drawString(empfaenger_x, empfaenger_y - 15, request.company.firmenadresse)
+    c.drawString(empfaenger_x, empfaenger_y - 30, f"z. Hd. {request.company.ansprechpartner}")
+
+    c.drawString(datum_x, datum_y, datetime.today().strftime("%d.%m.%Y"))
+
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(empfaenger_x, betreff_y, f"Bewerbung um die Position: {request.qualifications.position}")
+
+    c.setFont("Helvetica", 11)
+    for i, line in enumerate(text.split("\n")):
+        c.drawString(empfaenger_x, text_y - i * 15, line.strip())
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": "inline; filename=bewerbung.pdf"})
+
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
@@ -136,18 +177,23 @@ async def generate_application(request: ApplicationRequest):
 
     try:
         bewerbungstext = await generate_application_with_cerebras(request)
-
         response_obj = ApplicationResponse(
             id=str(uuid.uuid4()),
             bewerbungstext=bewerbungstext,
             created_at=datetime.utcnow()
         )
-
         return response_obj
-
     except Exception as e:
         logger.error(f"Application generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
+@api_router.post("/generate-application-pdf")
+async def generate_application_pdf(request: ApplicationRequest):
+    if not request.gdpr_consent:
+        raise HTTPException(status_code=400, detail="GDPR consent is required")
+
+    bewerbungstext = await generate_application_with_cerebras(request)
+    return generate_pdf_din5008(request, bewerbungstext)
 
 # === Middleware ===
 app.include_router(api_router)
