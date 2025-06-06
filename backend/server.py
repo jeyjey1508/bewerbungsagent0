@@ -3,10 +3,12 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List
 import uuid
 from datetime import datetime
+from pathlib import Path
+import httpx
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -17,7 +19,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 
 # === FastAPI Setup ===
 app = FastAPI()
@@ -57,31 +58,10 @@ class ApplicationResponse(BaseModel):
     bewerbungstext: str
     created_at: datetime
 
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
 # === Routes ===
 @api_router.get("/")
 async def root():
     return {"message": "Bewerbungsgenerator API - Ready!"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_obj = StatusCheck(**input.dict())
-    await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    docs = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**doc) for doc in docs]
-
-import httpx
 
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
@@ -138,7 +118,6 @@ Erstelle nur den Bewerbungstext.
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
-
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
@@ -153,23 +132,13 @@ async def generate_application(request: ApplicationRequest):
             created_at=datetime.utcnow()
         )
 
-        # Optional speichern
-        application_dict = response_obj.dict()
-        application_dict.update({
-            "personal_data": request.personal.dict(),
-            "qualifications": request.qualifications.dict(),
-            "company_data": request.company.dict(),
-            "stil": request.stil
-        })
-        await db.applications.insert_one(application_dict)
-
         return response_obj
 
     except Exception as e:
         logger.error(f"Application generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
-# === Middleware & Shutdown ===
+# === Middleware ===
 app.include_router(api_router)
 
 app.add_middleware(
@@ -179,5 +148,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
-
