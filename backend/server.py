@@ -65,10 +65,17 @@ async def root():
 
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
-Du bist ein Experte für professionelle Bewerbungsschreiben nach DIN 5008.
-Erstelle ein vollständiges Anschreiben im Stil: {request.stil}. Halte dich dabei an alle formalen Vorgaben der DIN 5008 für Geschäftsbriefe. Verwende eine saubere Formatierung, korrekte Struktur (Absender, Empfänger, Datum, Betreff, Anrede, Fließtext, Grußformel) und achte auf klare Absätze.
+Du bist ein Bewerbungsexperte. Verfasse ein vollständiges Bewerbungsschreiben streng nach der Norm DIN 5008. Halte dich an folgende Struktur:
 
-Nutze folgenden Inhalt:
+1. Absenderadresse oben rechts
+2. Empfängeradresse links, 4,5 cm vom oberen Rand
+3. Datum rechts
+4. Betreff fett ohne 'Betreff:' davor
+5. Anrede
+6. Fließtext mit Absätzen (Einleitung, Hauptteil, Schluss)
+7. Grußformel mit Namen darunter
+
+Nutze folgende Informationen:
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
