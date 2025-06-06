@@ -65,7 +65,10 @@ async def root():
 
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
-Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
+Du bist ein Experte für professionelle Bewerbungsschreiben nach DIN 5008.
+Erstelle ein vollständiges Anschreiben im Stil: {request.stil}. Halte dich dabei an alle formalen Vorgaben der DIN 5008 für Geschäftsbriefe. Verwende eine saubere Formatierung, korrekte Struktur (Absender, Empfänger, Datum, Betreff, Anrede, Fließtext, Grußformel) und achte auf klare Absätze.
+
+Nutze folgenden Inhalt:
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
@@ -87,8 +90,9 @@ FIRMENDATEN:
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
 
-Erstelle nur den Bewerbungstext.
+Gib nur den formatierten Bewerbungstext im DIN-5008-Stil zurück.
 """
+
 
     headers = {
         "Authorization": f"Bearer {os.environ['CEREBRAS_API_KEY']}",
