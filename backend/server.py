@@ -59,7 +59,8 @@ class ApplicationRequest(BaseModel):
 
 class ApplicationResponse(BaseModel):
     id: str
-    bewerbung_pdf_base64: str
+    bewerbungstext: str
+    pdf_base64: str
     created_at: datetime
 
 # === Routes ===
@@ -160,13 +161,12 @@ async def generate_application(request: ApplicationRequest):
         pdf_bytes = generate_pdf_from_text(text)
         pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
 
-        response_obj = ApplicationResponse(
-            id=str(uuid.uuid4()),
-            bewerbung_pdf_base64=pdf_base64,
-            created_at=datetime.utcnow()
-        )
-
-        return response_obj
+        return {
+            "id": str(uuid.uuid4()),
+            "bewerbungstext": text,
+            "pdf_base64": pdf_base64,
+            "created_at": datetime.utcnow()
+        }
 
     except Exception as e:
         logger.error(f"Application generation failed: {e}")
