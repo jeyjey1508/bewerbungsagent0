@@ -4,8 +4,6 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 from pydantic import BaseModel
-from typing import List
-import uuid
 from datetime import datetime
 from pathlib import Path
 import httpx
@@ -13,6 +11,7 @@ import base64
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+import uuid
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -60,7 +59,7 @@ class ApplicationRequest(BaseModel):
 class ApplicationResponse(BaseModel):
     id: str
     bewerbungstext: str
-    pdf_base64: str
+    bewerbung_pdf_base64: str
     created_at: datetime
 
 # === Routes ===
@@ -122,16 +121,10 @@ Gib nur den Bewerbungstext zurück.
         ]
     }
 
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
-
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
-
-    except Exception as e:
-        logging.error(f"Application generation error: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
 def generate_pdf_from_text(content: str) -> bytes:
     buffer = BytesIO()
@@ -164,7 +157,7 @@ async def generate_application(request: ApplicationRequest):
         return {
             "id": str(uuid.uuid4()),
             "bewerbungstext": text,
-            "pdf_base64": pdf_base64,
+            "bewerbung_pdf_base64": pdf_base64,
             "created_at": datetime.utcnow()
         }
 
