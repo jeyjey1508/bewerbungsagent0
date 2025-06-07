@@ -328,25 +328,17 @@ function App() {
             </form>
           </div>
 
-          {/* Preview Section */}
+          {/* Preview Section */} 
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">📄 Bewerbungsvorschau</h2>
-          
+            
             <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
-              {generatedApplication || pdfBase64 ? (
+              {generatedApplication ? (
                 <div className="space-y-4">
-                  {pdfBase64 ? (
-                    <iframe
-                      title="PDF-Vorschau"
-                      src={`data:application/pdf;base64,${pdfBase64}`}
-                      className="w-full h-[70vh] border rounded"
-                    />
-                  ) : (
-                    <div className="whitespace-pre-line text-gray-800 leading-relaxed">
-                      {generatedApplication}
-                    </div>
-                  )}
-          
+                  <div className="whitespace-pre-line text-gray-800 leading-relaxed">
+                    {generatedApplication}
+                  </div>
+                  
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
                     <button
                       onClick={copyToClipboard}
@@ -358,7 +350,7 @@ function App() {
                       onClick={exportToPDF}
                       className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                     >
-                      📄 Als PDF speichern
+                      📄 Als PDF drucken
                     </button>
                   </div>
                 </div>
