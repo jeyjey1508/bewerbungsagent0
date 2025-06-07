@@ -32,7 +32,7 @@ function App() {
     gdpr_consent: false
   });
 
-  const [generatedApplication, setGeneratedApplication] = useState("");
+  const [generatedApplication, setGeneratedApplication] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,39 +59,12 @@ function App() {
 
     try {
       const response = await axios.post(`${API}/generate-application`, formData);
-      console.log("Antwort von Backend:", response.data);
-
-      setGeneratedApplication(response.data.bewerbungstext);
+      setGeneratedApplication(response.data);
     } catch (err) {
       setError("Fehler beim Generieren der Bewerbung: " + (err.response?.data?.detail || err.message));
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedApplication);
-    alert("Bewerbungstext in die Zwischenablage kopiert!");
-  };
-
-  const exportToPDF = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Bewerbungsschreiben</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-            .application-content { white-space: pre-line; }
-          </style>
-        </head>
-        <body>
-          <div class="application-content">${generatedApplication}</div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
   };
 
   return (
@@ -107,9 +80,10 @@ function App() {
           {/* Form Section */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">📋 Bewerbungsdaten eingeben</h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Data Section */}
+              {/* ... [Formularfelder wie gehabt] ... */}
+                {/* Personal Data Section */}
               <div className="border-l-4 border-blue-500 pl-4">
                 <h3 className="text-lg font-medium text-gray-700 mb-4">👤 Persönliche Daten</h3>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -294,7 +268,8 @@ function App() {
                 </div>
               </div>
 
-              {/* GDPR Checkbox */}
+              
+              {/* DSGVO Checkbox */}
               <div className="border-l-4 border-red-500 pl-4">
                 <div className="flex items-start space-x-3">
                   <input
@@ -331,34 +306,29 @@ function App() {
           {/* Preview Section */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">📄 Bewerbungsvorschau</h2>
-          
-            <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
-              {generatedApplication || pdfBase64 ? (
+
+            <div className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
+              {generatedApplication ? (
                 <div className="space-y-4">
-                  {pdfBase64 ? (
-                    <iframe
-                      title="PDF-Vorschau"
-                      src={`data:application/pdf;base64,${pdfBase64}`}
-                      className="w-full h-[70vh] border rounded"
-                    />
-                  ) : (
-                    <div className="whitespace-pre-line text-gray-800 leading-relaxed">
-                      {generatedApplication}
-                    </div>
-                  )}
-          
+                  <iframe
+                    title="PDF-Vorschau"
+                    src={`data:application/pdf;base64,${generatedApplication.bewerbung_pdf_base64}`}
+                    width="100%"
+                    height="600px"
+                    className="border rounded"
+                  ></iframe>
+
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
                     <button
-                      onClick={copyToClipboard}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+                      onClick={() => {
+                        const pdfWindow = window.open();
+                        pdfWindow.document.write(
+                          `<iframe width='100%' height='100%' src='data:application/pdf;base64,${generatedApplication.bewerbung_pdf_base64}'></iframe>`
+                        );
+                      }}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                     >
-                      📋 Text kopieren
-                    </button>
-                    <button
-                      onClick={exportToPDF}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      📄 Als PDF speichern
+                      📄 In PDF-Viewer öffnen
                     </button>
                   </div>
                 </div>
