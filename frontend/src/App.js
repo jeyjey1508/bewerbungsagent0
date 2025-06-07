@@ -80,128 +80,75 @@ function App() {
 
 
   
-                    <div className="space-y-6">
-            {/* Persönliche Daten */}
-            <div className="border-l-4 border-blue-500 pl-4">
-              <h3 className="text-lg font-medium text-gray-700 mb-2">👤 Persönliche Daten</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <input placeholder="Vorname"
-                  value={formData.personal.vorname}
-                  onChange={(e) => handleInputChange("personal", "vorname", e.target.value)}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
-                <input placeholder="Nachname"
-                  value={formData.personal.nachname}
-                  onChange={(e) => handleInputChange("personal", "nachname", e.target.value)}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
-                <input type="number" placeholder="Alter"
-                  value={formData.personal.alter}
-                  onChange={(e) => handleInputChange("personal", "alter", parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
-                <input type="email" placeholder="E-Mail"
-                  value={formData.personal.email}
-                  onChange={(e) => handleInputChange("personal", "email", e.target.value)}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
-                <input placeholder="Telefonnummer"
-                  value={formData.personal.telefon}
-                  onChange={(e) => handleInputChange("personal", "telefon", e.target.value)}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
-                <input placeholder="Adresse"
-                  value={formData.personal.adresse}
-                  onChange={(e) => handleInputChange("personal", "adresse", e.target.value)}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
-              </div>
-            </div>
-          
-            {/* Qualifikationen */}
-            <div className="border-l-4 border-green-500 pl-4">
-              <h3 className="text-lg font-medium text-gray-700 mb-2">🎓 Qualifikationen</h3>
-              <input placeholder="Gewünschte Position"
-                value={formData.qualifications.position}
-                onChange={(e) => handleInputChange("qualifications", "position", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <textarea placeholder="Ausbildung"
-                value={formData.qualifications.ausbildung}
-                onChange={(e) => handleInputChange("qualifications", "ausbildung", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <textarea placeholder="Berufserfahrung"
-                value={formData.qualifications.berufserfahrung}
-                onChange={(e) => handleInputChange("qualifications", "berufserfahrung", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <textarea placeholder="Stärken & Fähigkeiten"
-                value={formData.qualifications.staerken}
-                onChange={(e) => handleInputChange("qualifications", "staerken", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <input placeholder="Sprachkenntnisse"
-                value={formData.qualifications.sprachen}
-                onChange={(e) => handleInputChange("qualifications", "sprachen", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <textarea placeholder="Motivation"
-                value={formData.qualifications.motivation}
-                onChange={(e) => handleInputChange("qualifications", "motivation", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-            </div>
-          
-            {/* Firmendaten */}
-            <div className="border-l-4 border-orange-500 pl-4">
-              <h3 className="text-lg font-medium text-gray-700 mb-2">🏢 Firmendaten</h3>
-              <input placeholder="Firmenname"
-                value={formData.company.firmenname}
-                onChange={(e) => handleInputChange("company", "firmenname", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <input placeholder="Ansprechpartner"
-                value={formData.company.ansprechpartner}
-                onChange={(e) => handleInputChange("company", "ansprechpartner", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-              <input placeholder="Firmenadresse"
-                value={formData.company.firmenadresse}
-                onChange={(e) => handleInputChange("company", "firmenadresse", e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-                required
-              />
-            </div>
-          
-            {/* Stil-Auswahl */}
-            <div className="border-l-4 border-purple-500 pl-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">🎨 Bewerbungsstil</label>
-              <select
-                value={formData.stil}
-                onChange={(e) => setFormData(prev => ({ ...prev, stil: e.target.value }))}
-                className="w-full px-3 py-2 border rounded"
-              >
-                <option value="Formell">Formell</option>
-                <option value="Kreativ">Kreativ</option>
-                <option value="Locker">Locker</option>
-              </select>
-            </div>
-          </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Vorname</label>
+    <input
+      type="text"
+      placeholder="Max"
+      value={formData.personal.vorname}
+      onChange={(e) => handleInputChange('personal', 'vorname', e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Nachname</label>
+    <input
+      type="text"
+      placeholder="Mustermann"
+      value={formData.personal.nachname}
+      onChange={(e) => handleInputChange('personal', 'nachname', e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Alter</label>
+    <input
+      type="number"
+      placeholder="30"
+      value={formData.personal.alter}
+      onChange={(e) => handleInputChange('personal', 'alter', parseInt(e.target.value))}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail</label>
+    <input
+      type="email"
+      placeholder="max@example.com"
+      value={formData.personal.email}
+      onChange={(e) => handleInputChange('personal', 'email', e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
+    <input
+      type="text"
+      placeholder="0151 12345678"
+      value={formData.personal.telefon}
+      onChange={(e) => handleInputChange('personal', 'telefon', e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+    <input
+      type="text"
+      placeholder="Musterstraße 1, 12345 Berlin"
+      value={formData.personal.adresse}
+      onChange={(e) => handleInputChange('personal', 'adresse', e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+</div>
+
 
 
   
