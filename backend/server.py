@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
@@ -58,10 +58,27 @@ class ApplicationResponse(BaseModel):
     bewerbungstext: str
     created_at: datetime
 
+class StatusCheck(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    client_name: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class StatusCheckCreate(BaseModel):
+    client_name: str
+
 # === Routes ===
 @api_router.get("/")
 async def root():
     return {"message": "Bewerbungsgenerator API - Ready!"}
+
+@api_router.post("/status", response_model=StatusCheck)
+async def create_status_check(input: StatusCheckCreate):
+    # Dummy-Response (DB entfernt)
+    return StatusCheck(client_name=input.client_name)
+
+@api_router.get("/status", response_model=List[StatusCheck])
+async def get_status_checks():
+    return []
 
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
@@ -118,13 +135,35 @@ Erstelle nur den Bewerbungstext.
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
+# === NEU: Formatierung in DIN 5008 ===
+def format_to_din5008(request: ApplicationRequest, raw_text: str) -> str:
+    heute = datetime.utcnow().strftime("%d.%m.%Y")
+    absender = f"{request.personal.vorname} {request.personal.nachname}\n{request.personal.adresse}\n{request.personal.email} • {request.personal.telefon}"
+    empfaenger = f"{request.company.firmenname}\n{request.company.ansprechpartner}\n{request.company.firmenadresse}"
+
+    din_text = f"""{absender}
+
+{empfaenger}
+
+{heute}
+
+Bewerbung um eine Stelle als {request.qualifications.position}
+
+{raw_text}
+
+Mit freundlichen Grüßen
+
+{request.personal.vorname} {request.personal.nachname}"""
+    return din_text
+
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        bewerbungstext = await generate_application_with_cerebras(request)
+        raw_text = await generate_application_with_cerebras(request)
+        bewerbungstext = format_to_din5008(request, raw_text)
 
         response_obj = ApplicationResponse(
             id=str(uuid.uuid4()),
