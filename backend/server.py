@@ -4,14 +4,15 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 from pydantic import BaseModel
+from typing import List
+import uuid
 from datetime import datetime
 from pathlib import Path
 import httpx
-import base64
-from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-import uuid
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -59,7 +60,6 @@ class ApplicationRequest(BaseModel):
 class ApplicationResponse(BaseModel):
     id: str
     bewerbungstext: str
-    bewerbung_pdf_base64: str
     created_at: datetime
 
 # === Routes ===
@@ -67,7 +67,7 @@ class ApplicationResponse(BaseModel):
 async def root():
     return {"message": "Bewerbungsgenerator API - Ready!"}
 
-async def generate_application_text(request: ApplicationRequest) -> str:
+async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
 Du bist ein Bewerbungsexperte. Verfasse ein vollständiges Bewerbungsschreiben streng nach der Norm DIN 5008. Halte dich an folgende Struktur:
 
@@ -101,7 +101,7 @@ FIRMENDATEN:
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
 
-Gib nur den Bewerbungstext zurück.
+Gib nur den formatierten Bewerbungstext im DIN-5008-Stil zurück.
 """
 
     headers = {
@@ -121,28 +121,54 @@ Gib nur den Bewerbungstext zurück.
         ]
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
+
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
 
-def generate_pdf_from_text(content: str) -> bytes:
+    except Exception as e:
+        logging.error(f"Application generation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
+def generate_pdf_din5008(request: ApplicationRequest, text: str):
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
+    c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
 
-    text_object = p.beginText(72, height - 72)
-    text_object.setFont("Helvetica", 12)
+    absender_x = 350
+    absender_y = height - 40
+    empfaenger_x = 50
+    empfaenger_y = height - 120
+    datum_x = 350
+    datum_y = empfaenger_y - 40
+    betreff_y = datum_y - 60
+    text_y = betreff_y - 40
 
-    for line in content.split("\n"):
-        text_object.textLine(line)
+    c.drawString(absender_x, absender_y, f"{request.personal.vorname} {request.personal.nachname}")
+    c.drawString(absender_x, absender_y - 15, request.personal.adresse)
+    c.drawString(absender_x, absender_y - 30, request.personal.email)
+    c.drawString(absender_x, absender_y - 45, request.personal.telefon)
 
-    p.drawText(text_object)
-    p.showPage()
-    p.save()
+    c.drawString(empfaenger_x, empfaenger_y, request.company.firmenname)
+    c.drawString(empfaenger_x, empfaenger_y - 15, request.company.firmenadresse)
+    c.drawString(empfaenger_x, empfaenger_y - 30, f"z. Hd. {request.company.ansprechpartner}")
 
+    c.drawString(datum_x, datum_y, datetime.today().strftime("%d.%m.%Y"))
+
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(empfaenger_x, betreff_y, f"Bewerbung um die Position: {request.qualifications.position}")
+
+    c.setFont("Helvetica", 11)
+    for i, line in enumerate(text.split("\n")):
+        c.drawString(empfaenger_x, text_y - i * 15, line.strip())
+
+    c.showPage()
+    c.save()
     buffer.seek(0)
-    return buffer.read()
+
+    return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": "inline; filename=bewerbung.pdf"})
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
@@ -150,20 +176,24 @@ async def generate_application(request: ApplicationRequest):
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        text = await generate_application_text(request)
-        pdf_bytes = generate_pdf_from_text(text)
-        pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
-
-        return {
-            "id": str(uuid.uuid4()),
-            "bewerbungstext": text,
-            "bewerbung_pdf_base64": pdf_base64,
-            "created_at": datetime.utcnow()
-        }
-
+        bewerbungstext = await generate_application_with_cerebras(request)
+        response_obj = ApplicationResponse(
+            id=str(uuid.uuid4()),
+            bewerbungstext=bewerbungstext,
+            created_at=datetime.utcnow()
+        )
+        return response_obj
     except Exception as e:
         logger.error(f"Application generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+
+@api_router.post("/generate-application-pdf")
+async def generate_application_pdf(request: ApplicationRequest):
+    if not request.gdpr_consent:
+        raise HTTPException(status_code=400, detail="GDPR consent is required")
+
+    bewerbungstext = await generate_application_with_cerebras(request)
+    return generate_pdf_din5008(request, bewerbungstext)
 
 # === Middleware ===
 app.include_router(api_router)
