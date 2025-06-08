@@ -9,10 +9,6 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 import httpx
-import base64
-from io import BytesIO
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -60,7 +56,6 @@ class ApplicationRequest(BaseModel):
 class ApplicationResponse(BaseModel):
     id: str
     bewerbungstext: str
-    bewerbung_pdf_base64: str
     created_at: datetime
 
 # === Routes ===
@@ -68,19 +63,9 @@ class ApplicationResponse(BaseModel):
 async def root():
     return {"message": "Bewerbungsgenerator API - Ready!"}
 
-async def generate_application_text(request: ApplicationRequest) -> str:
+async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
-Du bist ein Bewerbungsexperte. Verfasse ein vollständiges Bewerbungsschreiben streng nach der Norm DIN 5008. Halte dich an folgende Struktur:
-
-1. Absenderadresse oben rechts
-2. Empfängeradresse links, 4,5 cm vom oberen Rand
-3. Datum rechts
-4. Betreff fett ohne 'Betreff:' davor
-5. Anrede
-6. Fließtext mit Absätzen (Einleitung, Hauptteil, Schluss)
-7. Grußformel mit Namen darunter
-
-Nutze folgende Informationen:
+Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
@@ -102,7 +87,7 @@ FIRMENDATEN:
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
 
-Gib nur den Bewerbungstext zurück.
+Erstelle nur den Bewerbungstext.
 """
 
     headers = {
@@ -131,46 +116,27 @@ Gib nur den Bewerbungstext zurück.
 
     except Exception as e:
         logging.error(f"Application generation error: {e}")
-        raise HTTPException(status_code=500, detail=f"Fehler beim Generieren des Bewerbungstextes: {str(e)}")
-
-def generate_pdf_from_text(content: str) -> bytes:
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-
-    text = p.beginText(72, height - 72)
-    text.setFont("Helvetica", 12)
-
-    for line in content.split("\n"):
-        text.textLine(line)
-
-    p.drawText(text)
-    p.showPage()
-    p.save()
-
-    buffer.seek(0)
-    return buffer.read()
+        raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
-        raise HTTPException(status_code=400, detail="GDPR-Zustimmung fehlt.")
+        raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        text = await generate_application_text(request)
-        pdf_bytes = generate_pdf_from_text(text)
-        pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+        bewerbungstext = await generate_application_with_cerebras(request)
 
-        return {
-            "id": str(uuid.uuid4()),
-            "bewerbungstext": text,
-            "bewerbung_pdf_base64": pdf_base64,
-            "created_at": datetime.utcnow()
-        }
+        response_obj = ApplicationResponse(
+            id=str(uuid.uuid4()),
+            bewerbungstext=bewerbungstext,
+            created_at=datetime.utcnow()
+        )
+
+        return response_obj
 
     except Exception as e:
         logger.error(f"Application generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Fehler bei der Bewerbungserstellung: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
 # === Middleware ===
 app.include_router(api_router)
