@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
-from pathlib import Path
 import httpx
+from pathlib import Path
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -65,6 +65,59 @@ class StatusCheck(BaseModel):
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+# === Utility Function ===
+def format_to_din5008_html(personal: PersonalData, company: CompanyData, date: str, body: str) -> str:
+    return f"""
+<html>
+    <head>
+        <meta charset=\"utf-8\">
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 50px;
+                line-height: 1.5;
+            }}
+            .top-right {{
+                text-align: right;
+            }}
+            .address-block {{
+                margin-top: 40px;
+                margin-bottom: 40px;
+            }}
+            .subject {{
+                font-weight: bold;
+                margin: 20px 0;
+            }}
+            .signature {{
+                margin-top: 40px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div>{personal.vorname} {personal.nachname}<br>
+        {personal.adresse}<br>
+        {personal.email} • {personal.telefon}</div>
+
+        <div class=\"top-right\">{date}</div>
+
+        <div class=\"address-block\">
+            {company.firmenname}<br>
+            {company.ansprechpartner}<br>
+            {company.firmenadresse}
+        </div>
+
+        <div class=\"subject\">Bewerbung um eine Stelle als {personal.nachname}</div>
+
+        <div>{body}</div>
+
+        <div class=\"signature\">
+            <p>Mit freundlichen Grüßen</p>
+            <p>{personal.vorname} {personal.nachname}</p>
+        </div>
+    </body>
+</html>
+"""
 
 # === Routes ===
 @api_router.get("/")
@@ -126,30 +179,12 @@ Erstelle nur den Bewerbungstext.
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
-            response.raise_for_status()
-            return response.json()["choices"][0]["message"]["content"].strip()
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+
     except Exception as e:
-        logger.error(f"Application generation error: {e}")
+        logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
-
-def format_din_5008(request: ApplicationRequest, body_text: str) -> str:
-    absender = f"{request.personal.vorname} {request.personal.nachname}\n{request.personal.adresse}\n{request.personal.email} • {request.personal.telefon}"
-    empfaenger = f"{request.company.firmenname}\n{request.company.ansprechpartner}\n{request.company.firmenadresse}"
-    datum = datetime.utcnow().strftime("%d.%m.%Y")
-
-    rechtsblock = f"{empfaenger:<50}{datum:>30}"
-
-    return f"""{absender}
-
-{rechtsblock}
-
-Bewerbung um eine Stelle als {request.qualifications.position}
-
-{body_text}
-
-Mit freundlichen Grüßen
-
-{request.personal.vorname} {request.personal.nachname}"""
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
@@ -157,12 +192,18 @@ async def generate_application(request: ApplicationRequest):
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     try:
-        raw_text = await generate_application_with_cerebras(request)
-        bewerbungstext = format_din_5008(request, raw_text)
+        bewerbungstext = await generate_application_with_cerebras(request)
+
+        formatted_html = format_to_din5008_html(
+            personal=request.personal,
+            company=request.company,
+            date=datetime.utcnow().strftime("%d.%m.%Y"),
+            body=bewerbungstext
+        )
 
         response_obj = ApplicationResponse(
             id=str(uuid.uuid4()),
-            bewerbungstext=bewerbungstext,
+            bewerbungstext=formatted_html,
             created_at=datetime.utcnow()
         )
 
