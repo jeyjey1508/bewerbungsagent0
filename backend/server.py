@@ -67,7 +67,7 @@ class StatusCheckCreate(BaseModel):
     client_name: str
 
 # === Utility Function ===
-def format_to_din5008_html(personal: PersonalData, company: CompanyData, date: str, body: str) -> str:
+def format_to_din5008_html(personal: PersonalData, company: CompanyData, date: str, body: str, position: str) -> str:
     return f"""
 <html>
     <head>
@@ -107,7 +107,7 @@ def format_to_din5008_html(personal: PersonalData, company: CompanyData, date: s
             {company.firmenadresse}
         </div>
 
-        <div class=\"subject\">Bewerbung um eine Stelle als {personal.nachname}</div>
+        <div class=\"subject\">Bewerbung um eine Stelle als {position}</div>
 
         <div>{body}</div>
 
@@ -198,7 +198,8 @@ async def generate_application(request: ApplicationRequest):
             personal=request.personal,
             company=request.company,
             date=datetime.utcnow().strftime("%d.%m.%Y"),
-            body=bewerbungstext
+            body=bewerbungstext,
+            position=request.qualifications.position
         )
 
         response_obj = ApplicationResponse(
