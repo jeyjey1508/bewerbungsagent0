@@ -333,9 +333,11 @@ function App() {
             <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
               {generatedApplication ? (
                 <div className="space-y-4">
-                  <div className="whitespace-pre-line text-gray-800 leading-relaxed">
-                    {generatedApplication}
-                  </div>
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: generatedApplication }}
+                  ></div>
+
                   
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
                     <button
