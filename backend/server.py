@@ -73,8 +73,7 @@ async def root():
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
-    # Dummy-Response (DB entfernt)
-    return StatusCheck(client_name=input.client_name)
+    return StatusCheck(**input.dict())
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
@@ -127,34 +126,30 @@ Erstelle nur den Bewerbungstext.
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
-
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
-
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        logging.error(f"Application generation error: {e}")
+        logger.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
-# === NEU: Formatierung in DIN 5008 ===
-def format_to_din5008(request: ApplicationRequest, raw_text: str) -> str:
-    heute = datetime.utcnow().strftime("%d.%m.%Y")
+def format_din_5008(request: ApplicationRequest, body_text: str) -> str:
     absender = f"{request.personal.vorname} {request.personal.nachname}\n{request.personal.adresse}\n{request.personal.email} • {request.personal.telefon}"
     empfaenger = f"{request.company.firmenname}\n{request.company.ansprechpartner}\n{request.company.firmenadresse}"
+    datum = datetime.utcnow().strftime("%d.%m.%Y")
 
-    din_text = f"""{absender}
+    rechtsblock = f"{empfaenger:<50}{datum:>30}"
 
-{empfaenger}
+    return f"""{absender}
 
-{heute}
+{rechtsblock}
 
 Bewerbung um eine Stelle als {request.qualifications.position}
 
-{raw_text}
+{body_text}
 
 Mit freundlichen Grüßen
 
 {request.personal.vorname} {request.personal.nachname}"""
-    return din_text
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
@@ -163,7 +158,7 @@ async def generate_application(request: ApplicationRequest):
 
     try:
         raw_text = await generate_application_with_cerebras(request)
-        bewerbungstext = format_to_din5008(request, raw_text)
+        bewerbungstext = format_din_5008(request, raw_text)
 
         response_obj = ApplicationResponse(
             id=str(uuid.uuid4()),
