@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
-import httpx
 from pathlib import Path
+import httpx
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -66,59 +66,6 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# === Utility Function ===
-def format_to_din5008_html(personal: PersonalData, company: CompanyData, date: str, body: str, position: str) -> str:
-    return f"""
-<html>
-    <head>
-        <meta charset=\"utf-8\">
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                margin: 50px;
-                line-height: 1.5;
-            }}
-            .top-right {{
-                text-align: right;
-            }}
-            .address-block {{
-                margin-top: 40px;
-                margin-bottom: 40px;
-            }}
-            .subject {{
-                font-weight: bold;
-                margin: 20px 0;
-            }}
-            .signature {{
-                margin-top: 40px;
-            }}
-        </style>
-    </head>
-    <body>
-        <div>{personal.vorname} {personal.nachname}<br>
-        {personal.adresse}<br>
-        {personal.email} • {personal.telefon}</div>
-
-        <div class=\"top-right\">{date}</div>
-
-        <div class=\"address-block\">
-            {company.firmenname}<br>
-            {company.ansprechpartner}<br>
-            {company.firmenadresse}
-        </div>
-
-        <div class=\"subject\">Bewerbung um eine Stelle als {position}</div>
-
-        <div>{body}</div>
-
-        <div class=\"signature\">
-            <p>Mit freundlichen Grüßen</p>
-            <p>{personal.vorname} {personal.nachname}</p>
-        </div>
-    </body>
-</html>
-"""
-
 # === Routes ===
 @api_router.get("/")
 async def root():
@@ -126,7 +73,8 @@ async def root():
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
-    return StatusCheck(**input.dict())
+    status_obj = StatusCheck(**input.dict())
+    return status_obj
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
@@ -156,7 +104,7 @@ FIRMENDATEN:
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
 
-Erstelle nur den Bewerbungstext.
+Erstelle nur den Bewerbungstext. Verwende Absätze zwischen Sinnabschnitten. Wiederhole keine Grußformel, die am Ende folgt.
 """
 
     headers = {
@@ -191,28 +139,69 @@ async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
-    try:
-        bewerbungstext = await generate_application_with_cerebras(request)
+    bewerbung_raw = await generate_application_with_cerebras(request)
 
-        formatted_html = format_to_din5008_html(
-            personal=request.personal,
-            company=request.company,
-            date=datetime.utcnow().strftime("%d.%m.%Y"),
-            body=bewerbungstext,
-            position=request.qualifications.position
-        )
+    # Bewerbung in Absätze umwandeln
+    paragraphs = bewerbung_raw.strip().split("\n\n")
+    content_html = "".join(f"<p>{para.strip()}</p>" for para in paragraphs if para.strip())
 
-        response_obj = ApplicationResponse(
-            id=str(uuid.uuid4()),
-            bewerbungstext=formatted_html,
-            created_at=datetime.utcnow()
-        )
+    html = f"""
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 2.5cm;
+                line-height: 1.5;
+                font-size: 12pt;
+            }}
+            .top-right {{
+                text-align: right;
+            }}
+            .address-block {{
+                margin-top: 40px;
+                margin-bottom: 40px;
+            }}
+            .subject {{
+                font-weight: bold;
+                margin: 20px 0;
+            }}
+            .signature {{
+                margin-top: 40px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div>{request.personal.vorname} {request.personal.nachname}<br>
+        {request.personal.adresse}<br>
+        {request.personal.email} • {request.personal.telefon}</div>
 
-        return response_obj
+        <div class='top-right'>{datetime.utcnow().strftime('%d.%m.%Y')}</div>
 
-    except Exception as e:
-        logger.error(f"Application generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
+        <div class='address-block'>
+            {request.company.firmenname}<br>
+            {request.company.ansprechpartner}<br>
+            {request.company.firmenadresse}
+        </div>
+
+        <div class='subject'>Bewerbung um eine Stelle als {request.qualifications.position}</div>
+
+        {content_html}
+
+        <div class='signature'>
+            <p>Mit freundlichen Grüßen</p>
+            <p>{request.personal.vorname} {request.personal.nachname}</p>
+        </div>
+    </body>
+</html>
+"""
+
+    return ApplicationResponse(
+        id=str(uuid.uuid4()),
+        bewerbungstext=html,
+        created_at=datetime.utcnow()
+    )
 
 # === Middleware ===
 app.include_router(api_router)
