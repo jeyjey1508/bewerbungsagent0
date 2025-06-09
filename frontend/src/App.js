@@ -68,9 +68,13 @@ function App() {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedApplication);
-    alert("Bewerbungstext in die Zwischenablage kopiert!");
-  };
+  const tempElement = document.createElement("div");
+  tempElement.innerHTML = generatedApplication;
+  const text = tempElement.innerText; // Nur Klartext ohne HTML
+  navigator.clipboard.writeText(text);
+  alert("Bewerbungstext in die Zwischenablage kopiert!");
+};
+
 
   const exportToPDF = () => {
     const printWindow = window.open('', '_blank');
