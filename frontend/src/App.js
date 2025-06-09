@@ -69,11 +69,16 @@ function App() {
 
   const copyToClipboard = () => {
   const tempElement = document.createElement("div");
-  tempElement.innerHTML = generatedApplication;
-  const text = tempElement.innerText; // Nur Klartext ohne HTML
+
+  // Nur den <body>-Inhalt extrahieren (vermeidet Styles etc.)
+  const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
+
+  const text = tempElement.innerText;
   navigator.clipboard.writeText(text);
   alert("Bewerbungstext in die Zwischenablage kopiert!");
 };
+
 
 
   const exportToPDF = () => {
