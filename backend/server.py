@@ -140,8 +140,13 @@ async def generate_application(request: ApplicationRequest):
 
     bewerbung_raw = await generate_application_with_cerebras(request)
 
+    import re
+
+    # Bewerbung an der ersten Grußformel trennen (alles danach wird entfernt)
+    cut_text = re.split(r"(?i)\bmit\s+freundlichen\s+grüßen\b.*", bewerbung_raw)[0].strip()
+    
     # Bewerbung in Absätze umwandeln
-    paragraphs = bewerbung_raw.strip().split("\n\n")
+    paragraphs = [p.strip() for p in cut_text.split("\n\n") if p.strip()]
     content_html = "".join(f"<p>{para.strip()}</p>" for para in paragraphs if para.strip())
 
     html = f"""
