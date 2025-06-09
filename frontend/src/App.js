@@ -70,16 +70,15 @@ function App() {
   const copyToClipboard = () => {
   const tempElement = document.createElement("div");
 
-  // Nur den <body>-Inhalt extrahieren (vermeidet Styles etc.)
+  // Nur den Inhalt zwischen <body>...</body> extrahieren
   const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
 
-  const text = tempElement.innerText;
-  navigator.clipboard.writeText(text);
-  alert("Bewerbungstext in die Zwischenablage kopiert!");
+  const text = tempElement.innerText; // <- reiner Text ohne HTML
+  navigator.clipboard.writeText(text)
+    .then(() => alert("Bewerbungstext in die Zwischenablage kopiert!"))
+    .catch(() => alert("Fehler beim Kopieren des Textes."));
 };
-
-
 
   const exportToPDF = () => {
     const printWindow = window.open('', '_blank');
