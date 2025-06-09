@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 import httpx
+import re
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -130,7 +131,7 @@ Erstelle nur den Bewerbungstext. Verwende Absätze zwischen Sinnabschnitten. Wie
         return response.json()["choices"][0]["message"]["content"].strip()
 
     except Exception as e:
-        logging.error(f"Application generation error: {e}")
+        logger.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
@@ -140,14 +141,12 @@ async def generate_application(request: ApplicationRequest):
 
     bewerbung_raw = await generate_application_with_cerebras(request)
 
-    import re
-
-    # Bewerbung an der ersten Grußformel trennen (alles danach wird entfernt)
+    # Bewerbung nach "Mit freundlichen Grüßen" abschneiden (case-insensitive)
     cut_text = re.split(r"(?i)\bmit\s+freundlichen\s+grüßen\b.*", bewerbung_raw)[0].strip()
-    
-    # Bewerbung in Absätze umwandeln
+
+    # HTML-Absätze erzeugen
     paragraphs = [p.strip() for p in cut_text.split("\n\n") if p.strip()]
-    content_html = "".join(f"<p>{para.strip()}</p>" for para in paragraphs if para.strip())
+    content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
 
     html = f"""
 <html>
