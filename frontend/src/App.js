@@ -333,10 +333,12 @@ function App() {
             <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
               {generatedApplication ? (
                 <div className="space-y-4">
-                  <div
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: generatedApplication }}
-                  ></div>
+                 <div
+                  className="generated-html"
+                  style={{ lineHeight: "1.8", marginTop: "1em" }}
+                  dangerouslySetInnerHTML={{ __html: generatedApplication }}
+                ></div>
+
 
                   
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
