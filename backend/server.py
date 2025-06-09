@@ -73,8 +73,7 @@ async def root():
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
-    status_obj = StatusCheck(**input.dict())
-    return status_obj
+    return StatusCheck(**input.dict())
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
@@ -156,11 +155,15 @@ async def generate_application(request: ApplicationRequest):
                 line-height: 1.5;
                 font-size: 12pt;
             }}
-            .top-right {{
+            .absender {{
                 text-align: right;
+                margin-bottom: 40px;
             }}
-            .address-block {{
-                margin-top: 40px;
+            .empfaenger {{
+                margin-bottom: 40px;
+            }}
+            .datum {{
+                text-align: right;
                 margin-bottom: 40px;
             }}
             .subject {{
@@ -173,23 +176,26 @@ async def generate_application(request: ApplicationRequest):
         </style>
     </head>
     <body>
-        <div>{request.personal.vorname} {request.personal.nachname}<br>
-        {request.personal.adresse}<br>
-        {request.personal.email} • {request.personal.telefon}</div>
+        <div class="absender">
+            {request.personal.vorname} {request.personal.nachname}<br>
+            {request.personal.adresse}<br>
+            {request.personal.email}<br>
+            {request.personal.telefon}
+        </div>
 
-        <div class='top-right'>{datetime.utcnow().strftime('%d.%m.%Y')}</div>
-
-        <div class='address-block'>
+        <div class="empfaenger">
             {request.company.firmenname}<br>
             {request.company.ansprechpartner}<br>
             {request.company.firmenadresse}
         </div>
 
-        <div class='subject'>Bewerbung um eine Stelle als {request.qualifications.position}</div>
+        <div class="datum">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
+
+        <div class="subject">Bewerbung um eine Stelle als {request.qualifications.position}</div>
 
         {content_html}
 
-        <div class='signature'>
+        <div class="signature">
             <p>Mit freundlichen Grüßen</p>
             <p>{request.personal.vorname} {request.personal.nachname}</p>
         </div>
