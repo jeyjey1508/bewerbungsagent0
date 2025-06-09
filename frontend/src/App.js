@@ -74,7 +74,12 @@ function App() {
   const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
 
-  const text = tempElement.innerText; // <- reiner Text ohne HTML
+  // Entferne evtl. vorhandene <style> oder <script>-Elemente, nur zur Sicherheit
+  const stylesAndScripts = tempElement.querySelectorAll("style, script");
+  stylesAndScripts.forEach(el => el.remove());
+
+  const text = tempElement.innerText;
+
   navigator.clipboard.writeText(text)
     .then(() => alert("Bewerbungstext in die Zwischenablage kopiert!"))
     .catch(() => alert("Fehler beim Kopieren des Textes."));
