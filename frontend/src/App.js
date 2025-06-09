@@ -85,25 +85,15 @@ function App() {
     .catch(() => alert("Fehler beim Kopieren des Textes."));
 };
 
-  const exportToPDF = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Bewerbungsschreiben</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-            .application-content { white-space: pre-line; }
-          </style>
-        </head>
-        <body>
-          <div class="application-content">${generatedApplication}</div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  };
+  const exportToPDF = async () => {
+  const blob = await axios.post(`${API}/generate-pdf`, formData, {
+    responseType: 'blob'
+  });
+
+  const fileURL = URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
+  window.open(fileURL, '_blank');
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
