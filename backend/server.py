@@ -10,6 +10,9 @@ from datetime import datetime
 from pathlib import Path
 import httpx
 import re
+import pdfkit
+from fastapi.responses import StreamingResponse
+from io import BytesIO
 
 # === ENV & Logging ===
 ROOT_DIR = Path(__file__).parent
@@ -104,7 +107,7 @@ FIRMENDATEN:
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
 
-Erstelle nur den Bewerbungstext. Verwende Absätze zwischen Sinnabschnitten. Wiederhole keine Grußformel, die am Ende folgt.
+Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist.
 """
 
     headers = {
@@ -131,7 +134,7 @@ Erstelle nur den Bewerbungstext. Verwende Absätze zwischen Sinnabschnitten. Wie
         return response.json()["choices"][0]["message"]["content"].strip()
 
     except Exception as e:
-        logger.error(f"Application generation error: {e}")
+        logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
@@ -140,12 +143,8 @@ async def generate_application(request: ApplicationRequest):
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
     bewerbung_raw = await generate_application_with_cerebras(request)
-
-    # Bewerbung nach "Mit freundlichen Grüßen" abschneiden (case-insensitive)
-    cut_text = re.split(r"(?i)\bmit\s+freundlichen\s+grüßen\b.*", bewerbung_raw)[0].strip()
-
-    # HTML-Absätze erzeugen
-    paragraphs = [p.strip() for p in cut_text.split("\n\n") if p.strip()]
+    bewerbung_clean = re.split(r"(?i)mit\s+freundlichen\s+grüßen", bewerbung_raw)[0].strip()
+    paragraphs = [p.strip() for p in bewerbung_clean.split("\n\n") if p.strip()]
     content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
 
     html = f"""
@@ -153,53 +152,35 @@ async def generate_application(request: ApplicationRequest):
     <head>
         <meta charset='utf-8'>
         <style>
-            body {{
-                font-family: Arial, sans-serif;
-                margin: 2.5cm;
-                line-height: 1.5;
-                font-size: 12pt;
-            }}
-            .absender {{
-                text-align: right;
-                margin-bottom: 40px;
-            }}
-            .empfaenger {{
-                margin-bottom: 40px;
-            }}
-            .datum {{
-                text-align: right;
-                margin-bottom: 40px;
-            }}
-            .subject {{
-                font-weight: bold;
-                margin: 20px 0;
-            }}
-            .signature {{
-                margin-top: 40px;
-            }}
+            body {{ font-family: Arial, sans-serif; margin: 2.5cm; line-height: 1.5; font-size: 12pt; }}
+            .absender {{ text-align: right; margin-bottom: 40px; }}
+            .empfaenger {{ margin-bottom: 40px; }}
+            .datum {{ text-align: right; margin-bottom: 40px; }}
+            .subject {{ font-weight: bold; margin: 20px 0; }}
+            .signature {{ margin-top: 40px; }}
         </style>
     </head>
     <body>
-        <div class="absender">
+        <div class='absender'>
             {request.personal.vorname} {request.personal.nachname}<br>
             {request.personal.adresse}<br>
             {request.personal.email}<br>
             {request.personal.telefon}
         </div>
 
-        <div class="empfaenger">
+        <div class='empfaenger'>
             {request.company.firmenname}<br>
             {request.company.ansprechpartner}<br>
             {request.company.firmenadresse}
         </div>
 
-        <div class="datum">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
+        <div class='datum'>{datetime.utcnow().strftime('%d.%m.%Y')}</div>
 
-        <div class="subject">Bewerbung um eine Stelle als {request.qualifications.position}</div>
+        <div class='subject'>Bewerbung um eine Stelle als {request.qualifications.position}</div>
 
         {content_html}
 
-        <div class="signature">
+        <div class='signature'>
             <p>Mit freundlichen Grüßen</p>
             <p>{request.personal.vorname} {request.personal.nachname}</p>
         </div>
@@ -213,7 +194,64 @@ async def generate_application(request: ApplicationRequest):
         created_at=datetime.utcnow()
     )
 
-# === Middleware ===
+@api_router.post("/generate-application-pdf")
+async def generate_application_pdf(request: ApplicationRequest):
+    if not request.gdpr_consent:
+        raise HTTPException(status_code=400, detail="GDPR consent is required")
+
+    bewerbung_raw = await generate_application_with_cerebras(request)
+    bewerbung_clean = re.split(r"(?i)mit\s+freundlichen\s+grüßen", bewerbung_raw)[0].strip()
+    paragraphs = [p.strip() for p in bewerbung_clean.split("\n\n") if p.strip()]
+    content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
+
+    html = f"""
+    <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 2.5cm; line-height: 1.5; font-size: 12pt; }}
+                .absender {{ text-align: right; margin-bottom: 40px; }}
+                .empfaenger {{ margin-bottom: 40px; }}
+                .datum {{ text-align: right; margin-bottom: 40px; }}
+                .subject {{ font-weight: bold; margin: 20px 0; }}
+                .signature {{ margin-top: 40px; }}
+            </style>
+        </head>
+        <body>
+            <div class="absender">
+                {request.personal.vorname} {request.personal.nachname}<br>
+                {request.personal.adresse}<br>
+                {request.personal.email}<br>
+                {request.personal.telefon}
+            </div>
+
+            <div class="empfaenger">
+                {request.company.firmenname}<br>
+                {request.company.ansprechpartner}<br>
+                {request.company.firmenadresse}
+            </div>
+
+            <div class="datum">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
+
+            <div class="subject">Bewerbung um eine Stelle als {request.qualifications.position}</div>
+
+            {content_html}
+
+            <div class="signature">
+                <p>Mit freundlichen Grüßen</p>
+                <p>{request.personal.vorname} {request.personal.nachname}</p>
+            </div>
+        </body>
+    </html>
+    """
+
+    pdf_bytes = pdfkit.from_string(html, False)
+
+    return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
+        "Content-Disposition": f"inline; filename=Bewerbung_{request.personal.nachname}.pdf"
+    })
+
+# === Middleware & Shutdown ===
 app.include_router(api_router)
 
 app.add_middleware(
