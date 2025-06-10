@@ -209,14 +209,14 @@ async def generate_application_pdf(request: ApplicationRequest):
         <head>
             <meta charset='utf-8'>
             <style>
-                @page {{ size: A4; margin: 2cm; }}
+                @page {{ size: A4; margin: 1.5cm; }}
             
                 body {{
                     font-family: Arial, sans-serif;
                     font-size: 12pt;
                     line-height: 1.5;
                     margin: 0;
-                    padding: 1.2cm;  /* Jetzt noch etwas schmaler */
+                    padding: 1cm 1.2cm 1.5cm 1.2cm;  /* oben/rechts/unten/links – kompakter oben */
                     orphans: 3;
                     widows: 3;
                     page-break-inside: avoid;
@@ -224,16 +224,16 @@ async def generate_application_pdf(request: ApplicationRequest):
             
                 .absender {{
                     text-align: right;
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
                 }}
             
                 .empfaenger {{
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
                 }}
             
                 .datum {{
                     text-align: right;
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
                 }}
             
                 .subject {{
@@ -245,6 +245,7 @@ async def generate_application_pdf(request: ApplicationRequest):
                     margin-top: 30px;
                 }}
             </style>
+
 
         </head>
         <body>
