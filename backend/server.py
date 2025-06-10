@@ -252,7 +252,7 @@ async def generate_application_pdf(request: ApplicationRequest):
         raise HTTPException(status_code=500, detail=f"PDF-Generierung fehlgeschlagen: {str(e)}")
 
     return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
-        "Content-Disposition": f"inline; filename=Bewerbung_{request.personal.nachname}.pdf"
+        "Content-Disposition": f"attachment; filename=Bewerbung_{request.personal.nachname}.pdf"
     })
 
 # === Middleware & Shutdown ===
