@@ -209,43 +209,43 @@ async def generate_application_pdf(request: ApplicationRequest):
         <head>
             <meta charset='utf-8'>
             <style>
-                @page { size: A4; margin: 2.5cm; }
-
-                body {
+                @page {{ size: A4; margin: 2.5cm; }}
+            
+                body {{
                     font-family: Arial, sans-serif;
                     font-size: 12pt;
                     line-height: 1.5;
                     margin: 0;
-                    padding: 1.5cm;  /* Weniger horizontaler Einzug */
+                    padding: 1.5cm;
                     orphans: 3;
                     widows: 3;
                     page-break-inside: avoid;
-                }
-
-
+                }}
+            
                 .absender {{
                     text-align: right;
                     margin-bottom: 20px;
                 }}
-
+            
                 .empfaenger {{
                     margin-bottom: 20px;
                 }}
-
+            
                 .datum {{
                     text-align: right;
                     margin-bottom: 20px;
                 }}
-
+            
                 .subject {{
                     font-weight: bold;
                     margin: 10px 0;
                 }}
-
+            
                 .signature {{
                     margin-top: 30px;
                 }}
             </style>
+
         </head>
         <body>
             <div class="absender">
