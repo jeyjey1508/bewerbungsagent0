@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 import httpx
 import re
-import pdfkit
+from weasyprint import HTML
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 
@@ -209,7 +209,8 @@ async def generate_application_pdf(request: ApplicationRequest):
         <head>
             <meta charset='utf-8'>
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 2.5cm; line-height: 1.5; font-size: 12pt; }}
+                @page {{ size: A4; margin: 2.5cm; }}
+                body {{ font-family: Arial, sans-serif; line-height: 1.5; font-size: 12pt; }}
                 .absender {{ text-align: right; margin-bottom: 40px; }}
                 .empfaenger {{ margin-bottom: 40px; }}
                 .datum {{ text-align: right; margin-bottom: 40px; }}
@@ -245,7 +246,10 @@ async def generate_application_pdf(request: ApplicationRequest):
     </html>
     """
 
-    pdf_bytes = pdfkit.from_string(html, False)
+    try:
+        pdf_bytes = HTML(string=html).write_pdf()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF-Generierung fehlgeschlagen: {str(e)}")
 
     return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
         "Content-Disposition": f"inline; filename=Bewerbung_{request.personal.nachname}.pdf"
