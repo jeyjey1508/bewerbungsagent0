@@ -209,18 +209,19 @@ async def generate_application_pdf(request: ApplicationRequest):
         <head>
             <meta charset='utf-8'>
             <style>
-                @page {{ size: A4; margin: 2cm; }}
+                @page { size: A4; margin: 2.5cm; }
 
-                html, body {{
+                body {
                     font-family: Arial, sans-serif;
                     font-size: 12pt;
                     line-height: 1.5;
                     margin: 0;
-                    padding: 2cm;
+                    padding: 1.5cm;  /* Weniger horizontaler Einzug */
                     orphans: 3;
                     widows: 3;
                     page-break-inside: avoid;
-                }}
+                }
+
 
                 .absender {{
                     text-align: right;
