@@ -209,14 +209,14 @@ async def generate_application_pdf(request: ApplicationRequest):
         <head>
             <meta charset='utf-8'>
             <style>
-                @page {{ size: A4; margin: 2.5cm; }}
+                @page {{ size: A4; margin: 2cm; }}
             
                 body {{
                     font-family: Arial, sans-serif;
                     font-size: 12pt;
                     line-height: 1.5;
                     margin: 0;
-                    padding: 1.5cm;
+                    padding: 1.2cm;  /* Jetzt noch etwas schmaler */
                     orphans: 3;
                     widows: 3;
                     page-break-inside: avoid;
