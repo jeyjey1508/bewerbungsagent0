@@ -86,7 +86,7 @@ function App() {
 };
 
   const exportToPDF = async () => {
-  const blob = await axios.post(`${API}/generate-pdf`, formData, {
+  const blob = await axios.post(`${API}/generate-application-pdf`, formData, {
     responseType: 'blob'
   });
 
