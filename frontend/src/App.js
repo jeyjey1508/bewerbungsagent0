@@ -3,7 +3,7 @@ import "./App.css";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = ${BACKEND_URL}/api;
 
 function App() {
   const [formData, setFormData] = useState({
@@ -58,7 +58,7 @@ function App() {
     }
 
     try {
-      const response = await axios.post(`${API}/generate-application`, formData);
+      const response = await axios.post(${API}/generate-application, formData);
       setGeneratedApplication(response.data.bewerbungstext);
     } catch (err) {
       setError("Fehler beim Generieren der Bewerbung: " + (err.response?.data?.detail || err.message));
@@ -86,9 +86,9 @@ function App() {
 };
 
   const exportToPDF = async () => {
-  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
+  const filename = Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf;
 
-  const blob = await axios.post(`${API}/export-pdf-from-html`, {
+  const blob = await axios.post(${API}/export-pdf-from-html, {
     html: generatedApplication,
     filename: filename
   }, {
@@ -102,6 +102,23 @@ function App() {
   document.body.appendChild(link);
   link.click();
   link.remove();
+};
+
+  const sendAsEmail = async () => {
+  const to = prompt("Wohin soll die Bewerbung geschickt werden?");
+  if (!to) return;
+
+  const filename = Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf;
+  const subject = Bewerbung: ${formData.qualifications.position};
+
+  await axios.post(${API}/send-email, {
+    to,
+    subject,
+    html: generatedApplication,
+    filename
+  });
+
+  alert("E-Mail wurde versendet!");
 };
 
 
