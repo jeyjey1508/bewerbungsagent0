@@ -86,13 +86,16 @@ function App() {
 };
 
   const exportToPDF = async () => {
-  const blob = await axios.post(`${API}/generate-application-pdf`, formData, {
+  const blob = await axios.post(`${API}/export-pdf-from-html`, {
+    html: generatedApplication
+  }, {
     responseType: 'blob'
   });
 
   const fileURL = URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
   window.open(fileURL, '_blank');
 };
+
 
 
   return (
