@@ -87,7 +87,8 @@ function App() {
 
   const exportToPDF = async () => {
   const blob = await axios.post(`${API}/export-pdf-from-html`, {
-    html: generatedApplication
+    html: generatedApplication,
+    filename: `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`
   }, {
     responseType: 'blob'
   });
@@ -95,6 +96,7 @@ function App() {
   const fileURL = URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
   window.open(fileURL, '_blank');
 };
+
 
 
 
