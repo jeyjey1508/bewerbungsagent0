@@ -86,17 +86,23 @@ function App() {
 };
 
   const exportToPDF = async () => {
+  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
+
   const blob = await axios.post(`${API}/export-pdf-from-html`, {
     html: generatedApplication,
-    filename: `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`
+    filename: filename
   }, {
     responseType: 'blob'
   });
 
-  const fileURL = URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
-  window.open(fileURL, '_blank');
+  const url = window.URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 };
-
 
 
 
