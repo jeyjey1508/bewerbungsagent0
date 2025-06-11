@@ -315,14 +315,17 @@ async def generate_application_pdf(request: ApplicationRequest):
 
 # === NEU: PDF direkt aus HTML generieren ===
 @api_router.post("/export-pdf-from-html")
-async def export_pdf_from_html(html: str = Body(..., embed=True)):
+async def export_pdf_from_html(
+    html: str = Body(..., embed=True),
+    filename: str = Body(default="Bewerbung.pdf", embed=True)
+):
     try:
         pdf_bytes = HTML(string=html).write_pdf()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF aus HTML fehlgeschlagen: {str(e)}")
 
     return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
-        "Content-Disposition": "attachment; filename=Bewerbung.pdf"
+        "Content-Disposition": f"attachment; filename={filename}"
     })
 
 # === Middleware ===
