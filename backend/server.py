@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Body
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -70,19 +70,7 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# === Routes ===
-@api_router.get("/")
-async def root():
-    return {"message": "Bewerbungsgenerator API - Ready!"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    return StatusCheck(**input.dict())
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    return []
-
+# === KI-Funktion ===
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
@@ -137,6 +125,19 @@ Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußforme
         logging.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
+# === Haupt-Endpunkte ===
+@api_router.get("/")
+async def root():
+    return {"message": "Bewerbungsgenerator API - Ready!"}
+
+@api_router.post("/status", response_model=StatusCheck)
+async def create_status_check(input: StatusCheckCreate):
+    return StatusCheck(**input.dict())
+
+@api_router.get("/status", response_model=List[StatusCheck])
+async def get_status_checks():
+    return []
+
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
@@ -148,45 +149,74 @@ async def generate_application(request: ApplicationRequest):
     content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
 
     html = f"""
-<html>
-    <head>
-        <meta charset='utf-8'>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 2.5cm; line-height: 1.5; font-size: 12pt; }}
-            .absender {{ text-align: right; margin-bottom: 40px; }}
-            .empfaenger {{ margin-bottom: 40px; }}
-            .datum {{ text-align: right; margin-bottom: 40px; }}
-            .subject {{ font-weight: bold; margin: 20px 0; }}
-            .signature {{ margin-top: 40px; }}
-        </style>
-    </head>
-    <body>
-        <div class='absender'>
-            {request.personal.vorname} {request.personal.nachname}<br>
-            {request.personal.adresse}<br>
-            {request.personal.email}<br>
-            {request.personal.telefon}
-        </div>
+    <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                @page {{ size: A4; margin: 1.5cm; }}
 
-        <div class='empfaenger'>
-            {request.company.firmenname}<br>
-            {request.company.ansprechpartner}<br>
-            {request.company.firmenadresse}
-        </div>
+                body {{
+                    font-family: Arial, sans-serif;
+                    font-size: 12pt;
+                    line-height: 1.5;
+                    margin: 0;
+                    padding: 1cm 1.2cm 1.5cm 1.2cm;
+                    orphans: 3;
+                    widows: 3;
+                    page-break-inside: avoid;
+                }}
 
-        <div class='datum'>{datetime.utcnow().strftime('%d.%m.%Y')}</div>
+                .absender {{
+                    text-align: right;
+                    margin-bottom: 15px;
+                }}
 
-        <div class='subject'>Bewerbung um eine Stelle als {request.qualifications.position}</div>
+                .empfaenger {{
+                    margin-bottom: 15px;
+                }}
 
-        {content_html}
+                .datum {{
+                    text-align: right;
+                    margin-bottom: 15px;
+                }}
 
-        <div class='signature'>
-            <p>Mit freundlichen Grüßen</p>
-            <p>{request.personal.vorname} {request.personal.nachname}</p>
-        </div>
-    </body>
-</html>
-"""
+                .subject {{
+                    font-weight: bold;
+                    margin: 10px 0;
+                }}
+
+                .signature {{
+                    margin-top: 30px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="absender">
+                {request.personal.vorname} {request.personal.nachname}<br>
+                {request.personal.adresse}<br>
+                {request.personal.email}<br>
+                {request.personal.telefon}
+            </div>
+
+            <div class="empfaenger">
+                {request.company.firmenname}<br>
+                {request.company.ansprechpartner}<br>
+                {request.company.firmenadresse}
+            </div>
+
+            <div class="datum">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
+
+            <div class="subject">Bewerbung um eine Stelle als {request.qualifications.position}</div>
+
+            {content_html}
+
+            <div class="signature">
+                <p>Mit freundlichen Grüßen</p>
+                <p>{request.personal.vorname} {request.personal.nachname}</p>
+            </div>
+        </body>
+    </html>
+    """
 
     return ApplicationResponse(
         id=str(uuid.uuid4()),
@@ -204,49 +234,47 @@ async def generate_application_pdf(request: ApplicationRequest):
     paragraphs = [p.strip() for p in bewerbung_clean.split("\n\n") if p.strip()]
     content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
 
-    html = f"""
+    html = f"""<!DOCTYPE html>
     <html>
         <head>
             <meta charset='utf-8'>
             <style>
                 @page {{ size: A4; margin: 1.5cm; }}
-            
+
                 body {{
                     font-family: Arial, sans-serif;
                     font-size: 12pt;
                     line-height: 1.5;
                     margin: 0;
-                    padding: 1cm 1.2cm 1.5cm 1.2cm;  /* oben/rechts/unten/links – kompakter oben */
+                    padding: 1cm 1.2cm 1.5cm 1.2cm;
                     orphans: 3;
                     widows: 3;
                     page-break-inside: avoid;
                 }}
-            
+
                 .absender {{
                     text-align: right;
                     margin-bottom: 15px;
                 }}
-            
+
                 .empfaenger {{
                     margin-bottom: 15px;
                 }}
-            
+
                 .datum {{
                     text-align: right;
                     margin-bottom: 15px;
                 }}
-            
+
                 .subject {{
                     font-weight: bold;
                     margin: 10px 0;
                 }}
-            
+
                 .signature {{
                     margin-top: 30px;
                 }}
             </style>
-
-
         </head>
         <body>
             <div class="absender">
@@ -285,7 +313,19 @@ async def generate_application_pdf(request: ApplicationRequest):
         "Content-Disposition": f"attachment; filename=Bewerbung_{request.personal.nachname}.pdf"
     })
 
-# === Middleware & Shutdown ===
+# === NEU: PDF direkt aus HTML generieren ===
+@api_router.post("/export-pdf-from-html")
+async def export_pdf_from_html(html: str = Body(..., embed=True)):
+    try:
+        pdf_bytes = HTML(string=html).write_pdf()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF aus HTML fehlgeschlagen: {str(e)}")
+
+    return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
+        "Content-Disposition": "attachment; filename=Bewerbung.pdf"
+    })
+
+# === Middleware ===
 app.include_router(api_router)
 
 app.add_middleware(
