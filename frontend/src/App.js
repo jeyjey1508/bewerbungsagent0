@@ -377,7 +377,7 @@ function App() {
                       onClick={copyToClipboard}
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                     >
-                      📋 Text kopieren
+                      📧 Als E-Mail senden
                     </button>
                     <button
                       onClick={exportToPDF}
