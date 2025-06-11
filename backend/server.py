@@ -339,3 +339,54 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+import base64
+
+@api_router.post("/send-email")
+async def send_email(
+    to: str = Body(...),
+    subject: str = Body(...),
+    html: str = Body(...),
+    filename: str = Body("Bewerbung.pdf")
+):
+    try:
+        pdf_bytes = HTML(string=html).write_pdf()
+        encoded_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF-Erstellung fehlgeschlagen: {str(e)}")
+
+    resend_api_key = os.getenv("RESEND_API_KEY")
+    resend_from = os.getenv("RESEND_FROM")
+
+    if not resend_api_key or not resend_from:
+        raise HTTPException(status_code=500, detail="Resend-Konfiguration fehlt")
+
+    payload = {
+        "from": resend_from,
+        "to": [to],
+        "subject": subject,
+        "html": "<p>Im Anhang findest du deine Bewerbung als PDF.</p>",
+        "attachments": [
+            {
+                "filename": filename,
+                "content": encoded_pdf,
+                "content_type": "application/pdf"
+            }
+        ]
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json=payload
+            )
+            response.raise_for_status()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"E-Mail-Versand fehlgeschlagen: {str(e)}")
+
+    return {"message": "E-Mail erfolgreich gesendet"}
