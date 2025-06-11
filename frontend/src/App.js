@@ -86,9 +86,9 @@ function App() {
 };
 
   const exportToPDF = async () => {
-  const filename = Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf;
+  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
 
-  const blob = await axios.post(${API}/export-pdf-from-html, {
+  const blob = await axios.post(`${API}/export-pdf-from-html`, {
     html: generatedApplication,
     filename: filename
   }, {
@@ -108,10 +108,10 @@ function App() {
   const to = prompt("Wohin soll die Bewerbung geschickt werden?");
   if (!to) return;
 
-  const filename = Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf;
-  const subject = Bewerbung: ${formData.qualifications.position};
+  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
+  const subject = `Bewerbung: ${formData.qualifications.position}`;
 
-  await axios.post(${API}/send-email, {
+  await axios.post(`${API}/send-email`, {
     to,
     subject,
     html: generatedApplication,
