@@ -1,3 +1,7 @@
+const [showEmailModal, setShowEmailModal] = useState(false);
+const [emailTo, setEmailTo] = useState("");
+const [emailStatus, setEmailStatus] = useState("");
+
 import React, { useState } from "react";
 import "./App.css";
 import axios from "axios";
@@ -105,21 +109,27 @@ function App() {
 };
 
   const sendAsEmail = async () => {
-  const to = prompt("Wohin soll die Bewerbung geschickt werden?");
-  if (!to) return;
+  if (!emailTo) {
+    setEmailStatus("Bitte eine gültige E-Mail-Adresse eingeben.");
+    return;
+  }
 
   const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
   const subject = `Bewerbung: ${formData.qualifications.position}`;
 
-  await axios.post(`${API}/send-email`, {
-    to,
-    subject,
-    html: generatedApplication,
-    filename
-  });
-
-  alert("E-Mail wurde versendet!");
+  try {
+    await axios.post(`${API}/send-email`, {
+      to: emailTo,
+      subject,
+      html: generatedApplication,
+      filename
+    });
+    setEmailStatus("✅ E-Mail erfolgreich gesendet.");
+  } catch (err) {
+    setEmailStatus("❌ Fehler beim Senden der E-Mail.");
+  }
 };
+
 
 
 
@@ -374,7 +384,7 @@ function App() {
                   
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
                     <button
-                      onClick={sendAsEmail}  // ✅ jetzt korrekt
+                      onClick={() => setShowEmailModal(true)}
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                     >
                       📧 Als E-Mail senden
@@ -401,5 +411,41 @@ function App() {
     </div>
   );
 }
+
+{showEmailModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+      <h2 className="text-xl font-semibold mb-4">📧 Bewerbung versenden</h2>
+
+      <input
+        type="email"
+        value={emailTo}
+        onChange={(e) => setEmailTo(e.target.value)}
+        placeholder="Empfänger-E-Mail eingeben"
+        className="w-full px-4 py-2 border rounded-lg mb-4"
+      />
+
+      {emailStatus && (
+        <p className="text-sm mb-2 text-gray-700">{emailStatus}</p>
+      )}
+
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setShowEmailModal(false)}
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+        >
+          Abbrechen
+        </button>
+        <button
+          onClick={sendAsEmail}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Senden
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
 export default App;
