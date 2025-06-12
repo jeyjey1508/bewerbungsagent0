@@ -374,7 +374,7 @@ function App() {
                   
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
                     <button
-                      onClick={copyToClipboard}
+                      onClick={sendAsEmail}  // ✅ jetzt korrekt
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                     >
                       📧 Als E-Mail senden
