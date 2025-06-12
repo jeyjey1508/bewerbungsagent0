@@ -36,6 +36,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailFrom, setEmailFrom] = useState("");
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailStatus, setEmailStatus] = useState("");
+
   const handleInputChange = (section, field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -105,21 +111,35 @@ function App() {
 };
 
   const sendAsEmail = async () => {
-  const to = prompt("Wohin soll die Bewerbung geschickt werden?");
-  if (!to) return;
+  if (!emailFrom || !emailTo || !emailSubject) {
+    setEmailStatus("Bitte alle Felder ausfüllen.");
+    return;
+  }
 
   const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
-  const subject = `Bewerbung: ${formData.qualifications.position}`;
 
-  await axios.post(`${API}/send-email`, {
-    to,
-    subject,
-    html: generatedApplication,
-    filename
-  });
+  try {
+    await axios.post(`${API}/send-email`, {
+      to: emailTo,
+      from: emailFrom,
+      subject: emailSubject,
+      html: generatedApplication,
+      filename,
+    });
 
-  alert("E-Mail wurde versendet!");
+    setEmailStatus("E-Mail erfolgreich gesendet!");
+    setTimeout(() => {
+      setShowEmailModal(false);
+      setEmailFrom("");
+      setEmailTo("");
+      setEmailSubject("");
+      setEmailStatus("");
+    }, 2500);
+  } catch (err) {
+    setEmailStatus("Fehler beim Senden: " + (err.response?.data?.detail || err.message));
+  }
 };
+
 
 
 
@@ -360,22 +380,20 @@ function App() {
           {/* Preview Section */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">📄 Bewerbungsvorschau</h2>
-            
+          
             <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
               {generatedApplication ? (
                 <div className="space-y-4">
-                 <div
-                  className="generated-html"
-                  style={{ lineHeight: "1.8", marginTop: "1em" }}
-                  dangerouslySetInnerHTML={{ __html: generatedApplication }}
-                ></div>
-
-
-                  
+                  <div
+                    className="generated-html"
+                    style={{ lineHeight: "1.8", marginTop: "1em" }}
+                    dangerouslySetInnerHTML={{ __html: generatedApplication }}
+                  ></div>
+          
                   <div className="flex gap-3 pt-6 border-t border-gray-200">
                     <button
-                      onClick={sendAsEmail}  // ✅ jetzt korrekt
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+                      onClick={() => setShowEmailModal(true)}
+                      className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
                     >
                       📧 Als E-Mail senden
                     </button>
@@ -396,6 +414,60 @@ function App() {
               )}
             </div>
           </div>
+          
+          {/* Email Modal */}
+          {showEmailModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+                <h2 className="text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
+          
+                <input
+                  type="email"
+                  value={emailFrom}
+                  onChange={(e) => setEmailFrom(e.target.value)}
+                  placeholder="Von (Ihre E-Mail)"
+                  className="mb-2 w-full border p-2 rounded"
+                />
+                <input
+                  type="email"
+                  value={emailTo}
+                  onChange={(e) => setEmailTo(e.target.value)}
+                  placeholder="An (Empfänger)"
+                  className="mb-2 w-full border p-2 rounded"
+                />
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Betreff"
+                  className="mb-2 w-full border p-2 rounded"
+                />
+          
+                <div className="text-sm text-gray-600 mb-4">
+                  📎 Anhang: <strong>Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf</strong>
+                </div>
+          
+                <div className="flex justify-between mt-4">
+                  <button
+                    onClick={() => setShowEmailModal(false)}
+                    className="bg-gray-400 text-white px-4 py-2 rounded"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={sendAsEmail}
+                    className="bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Senden
+                  </button>
+                </div>
+          
+                {emailStatus && (
+                  <div className="mt-3 text-sm text-blue-600">{emailStatus}</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
