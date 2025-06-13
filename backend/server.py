@@ -1,34 +1,31 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Body
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-import os
-import logging
 from pydantic import BaseModel, Field
 from typing import List
+from fastapi.responses import StreamingResponse
+from weasyprint import HTML
+from io import BytesIO
+import base64
+import httpx
 import uuid
+import logging
+import os
+import re
 from datetime import datetime
 from pathlib import Path
-import httpx
-import re
-from weasyprint import HTML
-from fastapi.responses import StreamingResponse
-from io import BytesIO
 
-# === ENV & Logging ===
+# === Setup ===
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# === FastAPI Setup ===
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-# === Data Models ===
+# === Models ===
 class PersonalData(BaseModel):
     vorname: str
     nachname: str
@@ -98,12 +95,10 @@ FIRMENDATEN:
 
 Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist.
 """
-
     headers = {
         "Authorization": f"Bearer {os.environ['CEREBRAS_API_KEY']}",
         "Content-Type": "application/json"
     }
-
     body = {
         "model": "llama-4-scout-17b-16e-instruct",
         "stream": False,
@@ -121,96 +116,46 @@ Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußforme
             response = await client.post("https://api.cerebras.ai/v1/chat/completions", headers=headers, json=body)
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
-
     except Exception as e:
-        logging.error(f"Application generation error: {e}")
+        logger.error(f"Application generation error: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating application: {str(e)}")
 
-# === Haupt-Endpunkte ===
+# === Endpunkte ===
 @api_router.get("/")
 async def root():
     return {"message": "Bewerbungsgenerator API - Ready!"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    return StatusCheck(**input.dict())
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    return []
 
 @api_router.post("/generate-application", response_model=ApplicationResponse)
 async def generate_application(request: ApplicationRequest):
     if not request.gdpr_consent:
         raise HTTPException(status_code=400, detail="GDPR consent is required")
 
-    bewerbung_raw = await generate_application_with_cerebras(request)
-    bewerbung_clean = re.split(r"(?i)mit\s+freundlichen\s+grüßen", bewerbung_raw)[0].strip()
-    paragraphs = [p.strip() for p in bewerbung_clean.split("\n\n") if p.strip()]
-    content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
+    raw = await generate_application_with_cerebras(request)
+    clean = re.split(r"(?i)mit\s+freundlichen\s+grüßen", raw)[0].strip()
+    paragraphs = [f"<p>{p.strip()}</p>" for p in clean.split("\n\n") if p.strip()]
+    content_html = "".join(paragraphs)
 
     html = f"""
     <html>
         <head>
             <meta charset='utf-8'>
             <style>
-                @page {{ size: A4; margin: 1.5cm; }}
-
-                body {{
-                    font-family: Arial, sans-serif;
-                    font-size: 12pt;
-                    line-height: 1.5;
-                    margin: 0;
-                    padding: 1cm 1.2cm 1.5cm 1.2cm;
-                    orphans: 3;
-                    widows: 3;
-                    page-break-inside: avoid;
-                }}
-
-                .absender {{
-                    text-align: right;
-                    margin-bottom: 15px;
-                }}
-
-                .empfaenger {{
-                    margin-bottom: 15px;
-                }}
-
-                .datum {{
-                    text-align: right;
-                    margin-bottom: 15px;
-                }}
-
-                .subject {{
-                    font-weight: bold;
-                    margin: 10px 0;
-                }}
-
-                .signature {{
-                    margin-top: 30px;
-                }}
+                body {{ font-family: Arial; font-size: 12pt; line-height: 1.5; margin: 1.5cm; }}
+                .signature {{ margin-top: 30px; }}
             </style>
         </head>
         <body>
-            <div class="absender">
-                {request.personal.vorname} {request.personal.nachname}<br>
-                {request.personal.adresse}<br>
-                {request.personal.email}<br>
-                {request.personal.telefon}
-            </div>
-
-            <div class="empfaenger">
-                {request.company.firmenname}<br>
-                {request.company.ansprechpartner}<br>
-                {request.company.firmenadresse}
-            </div>
-
-            <div class="datum">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
-
-            <div class="subject">Bewerbung um eine Stelle als {request.qualifications.position}</div>
-
+            <div>{request.personal.vorname} {request.personal.nachname}</div>
+            <div>{request.personal.adresse}</div>
+            <div>{request.personal.email} | {request.personal.telefon}</div>
+            <br>
+            <div>{request.company.firmenname}</div>
+            <div>{request.company.ansprechpartner}</div>
+            <div>{request.company.firmenadresse}</div>
+            <br>
+            <div><strong>Bewerbung um eine Stelle als {request.qualifications.position}</strong></div>
+            <br>
             {content_html}
-
             <div class="signature">
                 <p>Mit freundlichen Grüßen</p>
                 <p>{request.personal.vorname} {request.personal.nachname}</p>
@@ -218,132 +163,17 @@ async def generate_application(request: ApplicationRequest):
         </body>
     </html>
     """
+    return ApplicationResponse(id=str(uuid.uuid4()), bewerbungstext=html, created_at=datetime.utcnow())
 
-    return ApplicationResponse(
-        id=str(uuid.uuid4()),
-        bewerbungstext=html,
-        created_at=datetime.utcnow()
-    )
-
-@api_router.post("/generate-application-pdf")
-async def generate_application_pdf(request: ApplicationRequest):
-    if not request.gdpr_consent:
-        raise HTTPException(status_code=400, detail="GDPR consent is required")
-
-    bewerbung_raw = await generate_application_with_cerebras(request)
-    bewerbung_clean = re.split(r"(?i)mit\s+freundlichen\s+grüßen", bewerbung_raw)[0].strip()
-    paragraphs = [p.strip() for p in bewerbung_clean.split("\n\n") if p.strip()]
-    content_html = "".join(f"<p>{para}</p>" for para in paragraphs)
-
-    html = f"""<!DOCTYPE html>
-    <html>
-        <head>
-            <meta charset='utf-8'>
-            <style>
-                @page {{ size: A4; margin: 1.5cm; }}
-
-                body {{
-                    font-family: Arial, sans-serif;
-                    font-size: 12pt;
-                    line-height: 1.5;
-                    margin: 0;
-                    padding: 1cm 1.2cm 1.5cm 1.2cm;
-                    orphans: 3;
-                    widows: 3;
-                    page-break-inside: avoid;
-                }}
-
-                .absender {{
-                    text-align: right;
-                    margin-bottom: 15px;
-                }}
-
-                .empfaenger {{
-                    margin-bottom: 15px;
-                }}
-
-                .datum {{
-                    text-align: right;
-                    margin-bottom: 15px;
-                }}
-
-                .subject {{
-                    font-weight: bold;
-                    margin: 10px 0;
-                }}
-
-                .signature {{
-                    margin-top: 30px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="absender">
-                {request.personal.vorname} {request.personal.nachname}<br>
-                {request.personal.adresse}<br>
-                {request.personal.email}<br>
-                {request.personal.telefon}
-            </div>
-
-            <div class="empfaenger">
-                {request.company.firmenname}<br>
-                {request.company.ansprechpartner}<br>
-                {request.company.firmenadresse}
-            </div>
-
-            <div class="datum">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
-
-            <div class="subject">Bewerbung um eine Stelle als {request.qualifications.position}</div>
-
-            {content_html}
-
-            <div class="signature">
-                <p>Mit freundlichen Grüßen</p>
-                <p>{request.personal.vorname} {request.personal.nachname}</p>
-            </div>
-        </body>
-    </html>
-    """
-
-    try:
-        pdf_bytes = HTML(string=html).write_pdf()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF-Generierung fehlgeschlagen: {str(e)}")
-
-    return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
-        "Content-Disposition": f"attachment; filename=Bewerbung_{request.personal.nachname}.pdf"
-    })
-
-# === NEU: PDF direkt aus HTML generieren ===
 @api_router.post("/export-pdf-from-html")
-async def export_pdf_from_html(
-    html: str = Body(..., embed=True),
-    filename: str = Body(default="Bewerbung.pdf", embed=True)
-):
+async def export_pdf_from_html(html: str = Body(..., embed=True), filename: str = Body("Bewerbung.pdf", embed=True)):
     try:
         pdf_bytes = HTML(string=html).write_pdf()
+        return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        })
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF aus HTML fehlgeschlagen: {str(e)}")
-
-    return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
-
-# === Middleware ===
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=[
-    "https://bewerbungsagent0.onrender.com",
-    "https://bewerbungsagent0-1.onrender.com"
-],
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
-import base64
+        raise HTTPException(status_code=500, detail=f"PDF-Export fehlgeschlagen: {str(e)}")
 
 @api_router.post("/send-email")
 async def send_email(
@@ -369,13 +199,11 @@ async def send_email(
         "to": [to],
         "subject": subject,
         "html": "<p>Im Anhang findest du deine Bewerbung als PDF.</p>",
-        "attachments": [
-            {
-                "filename": filename,
-                "content": encoded_pdf,
-                "content_type": "application/pdf"
-            }
-        ]
+        "attachments": [{
+            "filename": filename,
+            "content": encoded_pdf,
+            "content_type": "application/pdf"
+        }]
     }
 
     try:
@@ -393,3 +221,17 @@ async def send_email(
         raise HTTPException(status_code=500, detail=f"E-Mail-Versand fehlgeschlagen: {str(e)}")
 
     return {"message": "E-Mail erfolgreich gesendet"}
+
+# === Router & Middleware ganz zum Schluss ===
+app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=[
+        "https://bewerbungsagent0.onrender.com",
+        "https://bewerbungsagent0-1.onrender.com"
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
