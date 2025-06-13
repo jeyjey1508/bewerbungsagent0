@@ -335,7 +335,10 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["https://bewerbungsagent0.onrender.com"],
+    allow_origins=[
+    "https://bewerbungsagent0.onrender.com",
+    "https://bewerbungsagent0-1.onrender.com"
+],
     allow_methods=["*"],
     allow_headers=["*"]
 )
