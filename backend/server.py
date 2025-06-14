@@ -230,8 +230,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=[
         "https://bewerbungsagent0.onrender.com",
-        "https://bewerbungsagent0-1.onrender.com"
+        "https://bewerbungsagent0-1.onrender.com",
+        "https://bewerbungsai.com"
     ],
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
