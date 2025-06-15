@@ -111,7 +111,7 @@ function App() {
 };
 
   const sendAsEmail = async () => {
-  if (!emailFrom || !emailTo || !emailSubject) {
+  if (!emailTo || !emailSubject) {
     setEmailStatus("Bitte alle Felder ausfüllen.");
     return;
   }
