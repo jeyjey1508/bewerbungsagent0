@@ -421,7 +421,7 @@ function App() {
               <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
                 <h2 className="text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
           
-                <<div className="mb-2 text-sm">
+                <div className="mb-2 text-sm">
                   <strong>Von:</strong> noreply@bewerbungsai.com
                 </div>
 
