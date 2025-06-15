@@ -435,6 +435,7 @@ function App() {
                   placeholder="An (Empfänger)"
                   className="mb-2 w-full border p-2 rounded"
                 />
+                         
                 <input
                   type="text"
                   value={emailSubject}
@@ -442,6 +443,12 @@ function App() {
                   placeholder="Betreff"
                   className="mb-2 w-full border p-2 rounded"
                 />
+                    
+                <div className="text-sm text-yellow-600 mb-2">
+                  ⚠️ Hinweis: Die E-Mail wird technisch von <strong>noreply@bewerbungsai.com</strong> gesendet.
+                  Die eingegebene Absenderadresse erscheint nur im E-Mail-Text, nicht als tatsächlicher Absender.
+                  Wir empfehlen, die Bewerbung zuerst an sich selbst zu schicken.
+                </div>           
           
                 <div className="text-sm text-gray-600 mb-4">
                   📎 Anhang: <strong>Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf</strong>
