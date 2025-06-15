@@ -421,13 +421,10 @@ function App() {
               <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
                 <h2 className="text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
           
-                <input
-                  type="email"
-                  value={emailFrom}
-                  onChange={(e) => setEmailFrom(e.target.value)}
-                  placeholder="Von (Ihre E-Mail)"
-                  className="mb-2 w-full border p-2 rounded"
-                />
+                <<div className="mb-2 text-sm">
+                  <strong>Von:</strong> noreply@bewerbungsai.com
+                </div>
+
                 <input
                   type="email"
                   value={emailTo}
@@ -444,11 +441,13 @@ function App() {
                   className="mb-2 w-full border p-2 rounded"
                 />
                     
-                <div className="text-sm text-yellow-600 mb-2">
-                  ⚠️ Hinweis: Die E-Mail wird technisch von <strong>noreply@bewerbungsai.com</strong> gesendet.
-                  Die eingegebene Absenderadresse erscheint nur im E-Mail-Text, nicht als tatsächlicher Absender.
-                  Wir empfehlen, die Bewerbung zuerst an sich selbst zu schicken.
-                </div>           
+                <div className="text-sm text-yellow-600 mb-2"> 
+                  ⚠️ Hinweis: Die Bewerbung wird technisch von <strong>noreply@bewerbungsai.com</strong> versendet.
+                  Diese Adresse erscheint als Absender. Es wird empfohlen, die E-Mail zunächst an die eigene Adresse zu senden,
+                  bevor sie an ein Unternehmen weitergeleitet wird.
+                </div>
+
+           
           
                 <div className="text-sm text-gray-600 mb-4">
                   📎 Anhang: <strong>Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf</strong>
