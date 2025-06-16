@@ -396,7 +396,6 @@ function App() {
           </div>
 
           
-<>
   <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
     {generatedApplication ? (
       <div className="space-y-4">
@@ -487,7 +486,6 @@ function App() {
       </div>
     </div>
   )}
-</>
 
 
 export default App;
