@@ -391,8 +391,9 @@ function App() {
             
             <div
               className="[&>p]:mb-5 text-justify text-gray-800"
-              dangerouslySetInnerHTML={{ __html: generatedText }}
-            />
+              dangerouslySetInnerHTML={{ __html: generatedApplication }}
+            ></div>
+
           </div>
 
           
