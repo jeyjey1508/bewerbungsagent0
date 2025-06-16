@@ -363,12 +363,19 @@ function App() {
 
               {/* Submit Button */}
               <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {isLoading ? "Bewerbung wird generiert..." : "🚀 Bewerbung generieren"}
-              </button>
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <DotPulse size={40} speed={1.3} color="#ffffff" />
+                </div>
+              ) : (
+                "🚀 Bewerbung generieren"
+              )}
+            </button>
+
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
