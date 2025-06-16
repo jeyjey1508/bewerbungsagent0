@@ -22,6 +22,9 @@ body {
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+  min-height: 500px; /* Feste Mindesthöhe für stabiles Layout */
+  height: auto;
+  transition: none; /* Verhindert Layout-Verschiebungen */
 }
 
 /* Generated HTML content styling */
@@ -36,7 +39,7 @@ body {
     padding: 0.75rem !important;
     font-size: 14px;
     line-height: 1.5;
-    min-height: 200px !important;
+    min-height: 400px !important; /* Reduzierte Höhe für Mobile */
   }
   
   .generated-html {
@@ -93,6 +96,7 @@ body {
     padding: 0.5rem !important;
     font-size: 13px;
     margin: 0 -0.25rem;
+    min-height: 350px !important; /* Stabile Höhe auch auf kleinen Geräten */
   }
   
   .generated-html {
@@ -194,6 +198,23 @@ input:focus, textarea:focus, select:focus {
   }
   50% {
     opacity: .5;
+  }
+}
+
+/* Prevent layout shifts during content generation */
+.bg-white.rounded-xl.shadow-lg {
+  min-height: 600px; /* Stabile Containerhöhe */
+}
+
+@media (max-width: 768px) {
+  .bg-white.rounded-xl.shadow-lg {
+    min-height: 500px; /* Angepasst für Mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .bg-white.rounded-xl.shadow-lg {
+    min-height: 450px; /* Kompakter für sehr kleine Bildschirme */
   }
 }
 
