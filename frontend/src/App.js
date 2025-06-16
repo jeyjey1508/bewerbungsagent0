@@ -1,10 +1,58 @@
-import { DotPulse } from '@uiball/loaders';
-import React, { useState } from "react";
-import "./App.css";
-import axios from "axios";
+// Mock-Funktionen für Demo-Zwecke (ersetzen Sie diese durch echte API-Calls)
+const mockGenerateApplication = async (formData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        data: {
+          bewerbungstext: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2>Bewerbung als ${formData.qualifications.position}</h2>
+            <p><strong>${formData.personal.vorname} ${formData.personal.nachname}</strong><br>
+            ${formData.personal.adresse}<br>
+            Tel: ${formData.personal.telefon}<br>
+            E-Mail: ${formData.personal.email}</p>
+            
+            <p><strong>${formData.company.ansprechpartner}</strong><br>
+            ${formData.company.firmenname}<br>
+            ${formData.company.firmenadresse}</p>
+            
+            <p><strong>Bewerbung um die Stelle als ${formData.qualifications.position}</strong></p>
+            
+            <p>Sehr geehrte Damen und Herren,</p>
+            
+            <p>hiermit bewerbe ich mich um die ausgeschriebene Stelle als ${formData.qualifications.position} in Ihrem Unternehmen.</p>
+            
+            <p><strong>Meine Qualifikationen:</strong><br>
+            Ausbildung: ${formData.qualifications.ausbildung}<br>
+            Berufserfahrung: ${formData.qualifications.berufserfahrung}<br>
+            Stärken: ${formData.qualifications.staerken}<br>
+            Sprachen: ${formData.qualifications.sprachen}</p>
+            
+            <p><strong>Motivation:</strong> ${formData.qualifications.motivation}</p>
+            
+            <p>Ich freue mich auf Ihre Rückmeldung und ein persönliches Gespräch.</p>
+            
+            <p>Mit freundlichen Grüßen<br>
+            ${formData.personal.vorname} ${formData.personal.nachname}</p>
+          </div>`
+        }
+      });
+    }, 2000);
+  });
+};
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const mockExportToPDF = async (html, filename) => {
+  alert(`PDF würde heruntergeladen werden: ${filename}`);
+};
+
+const mockSendEmail = async (emailData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true });
+    }, 1000);
+  });
+};import React, { useState } from "react";
+
+
 
 function App() {
   const [formData, setFormData] = useState({
@@ -65,111 +113,118 @@ function App() {
     }
 
     try {
-      const response = await axios.post(`${API}/generate-application`, formData);
+      const response = await mockGenerateApplication(formData);
       setGeneratedApplication(response.data.bewerbungstext);
     } catch (err) {
-      setError("Fehler beim Generieren der Bewerbung: " + (err.response?.data?.detail || err.message));
+      setError("Fehler beim Generieren der Bewerbung: " + err.message);
     } finally {
       setIsLoading(false);
+    }
+  };setIsLoading(false);
     }
   };
 
   const copyToClipboard = () => {
-  const tempElement = document.createElement("div");
+    const tempElement = document.createElement("div");
 
-  // Nur den Inhalt zwischen <body>...</body> extrahieren
-  const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
+    // Nur den Inhalt zwischen <body>...</body> extrahieren
+    const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
 
-  // Entferne evtl. vorhandene <style> oder <script>-Elemente, nur zur Sicherheit
-  const stylesAndScripts = tempElement.querySelectorAll("style, script");
-  stylesAndScripts.forEach(el => el.remove());
+    // Entferne evtl. vorhandene <style> oder <script>-Elemente, nur zur Sicherheit
+    const stylesAndScripts = tempElement.querySelectorAll("style, script");
+    stylesAndScripts.forEach(el => el.remove());
 
-  const text = tempElement.innerText;
+    const text = tempElement.innerText;
 
-  navigator.clipboard.writeText(text)
-    .then(() => alert("Bewerbungstext in die Zwischenablage kopiert!"))
-    .catch(() => alert("Fehler beim Kopieren des Textes."));
-};
+    navigator.clipboard.writeText(text)
+      .then(() => alert("Bewerbungstext in die Zwischenablage kopiert!"))
+      .catch(() => alert("Fehler beim Kopieren des Textes."));
+  };
 
   const exportToPDF = async () => {
-  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
+    const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
 
-  const blob = await axios.post(`${API}/export-pdf-from-html`, {
-    html: generatedApplication,
-    filename: filename
-  }, {
-    responseType: 'blob'
-  });
-
-  const url = window.URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-};
-
-  const sendAsEmail = async () => {
-  if (!emailTo || !emailSubject) {
-    setEmailStatus("Bitte alle Felder ausfüllen.");
-    return;
-  }
-
-  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
-
-  try {
-    await axios.post(`${API}/send-email`, {
-      to: emailTo,
-      from: emailFrom,
-      subject: emailSubject,
+    const blob = await axios.post(`${API}/export-pdf-from-html`, {
       html: generatedApplication,
-      filename,
+      filename: filename
+    }, {
+      responseType: 'blob'
     });
 
-    setEmailStatus("E-Mail erfolgreich gesendet!");
-    setTimeout(() => {
-      setShowEmailModal(false);
-      setEmailFrom("");
-      setEmailTo("");
-      setEmailSubject("");
-      setEmailStatus("");
-    }, 2500);
-  } catch (err) {
-    setEmailStatus("Fehler beim Senden: " + (err.response?.data?.detail || err.message));
-  }
-};
+    const url = window.URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
+  const sendAsEmail = async () => {
+    if (!emailTo || !emailSubject) {
+      setEmailStatus("Bitte alle Felder ausfüllen.");
+      return;
+    }
 
+    const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
 
+    try {
+      await axios.post(`${API}/send-email`, {
+        to: emailTo,
+        from: emailFrom,
+        subject: emailSubject,
+        html: generatedApplication,
+        filename,
+      });
+
+      setEmailStatus("E-Mail erfolgreich gesendet!");
+      setTimeout(() => {
+        setShowEmailModal(false);
+        setEmailFrom("");
+        setEmailTo("");
+        setEmailSubject("");
+        setEmailStatus("");
+      }, 2500);
+    } catch (err) {
+      setEmailStatus("Fehler beim Senden: " + (err.response?.data?.detail || err.message));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">🔧 Bewerbungsgenerator</h1>
-          <p className="text-lg text-gray-600">Erstellen Sie professionelle Bewerbungsschreiben mit KI-Unterstützung</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-4">
+            🔧 Bewerbungsgenerator
+          </h1>
+          <p className="text-sm sm:text-base lg:text-lg text-gray-600 px-2">
+            Erstellen Sie professionelle Bewerbungsschreiben mit KI-Unterstützung
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Form Section */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">📋 Bewerbungsdaten eingeben</h2>
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">
+              📋 Bewerbungsdaten eingeben
+            </h2>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Personal Data Section */}
-              <div className="border-l-4 border-blue-500 pl-4">
-                <h3 className="text-lg font-medium text-gray-700 mb-4">👤 Persönliche Daten</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+              <div className="border-l-4 border-blue-500 pl-3 sm:pl-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  👤 Persönliche Daten
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Vorname</label>
                     <input
                       type="text"
                       value={formData.personal.vorname}
                       onChange={(e) => handleInputChange('personal', 'vorname', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -179,7 +234,7 @@ function App() {
                       type="text"
                       value={formData.personal.nachname}
                       onChange={(e) => handleInputChange('personal', 'nachname', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -189,7 +244,7 @@ function App() {
                       type="number"
                       value={formData.personal.alter}
                       onChange={(e) => handleInputChange('personal', 'alter', parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -199,27 +254,27 @@ function App() {
                       type="email"
                       value={formData.personal.email}
                       onChange={(e) => handleInputChange('personal', 'email', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                       required
                     />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
                     <input
                       type="text"
                       value={formData.personal.telefon}
                       onChange={(e) => handleInputChange('personal', 'telefon', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                       required
                     />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
                     <input
                       type="text"
                       value={formData.personal.adresse}
                       onChange={(e) => handleInputChange('personal', 'adresse', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -227,16 +282,18 @@ function App() {
               </div>
 
               {/* Qualifications Section */}
-              <div className="border-l-4 border-green-500 pl-4">
-                <h3 className="text-lg font-medium text-gray-700 mb-4">🎓 Qualifikationen & Motivation</h3>
-                <div className="space-y-4">
+              <div className="border-l-4 border-green-500 pl-3 sm:pl-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  🎓 Qualifikationen & Motivation
+                </h3>
+                <div className="space-y-3 sm:space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gewünschte Position</label>
                     <input
                       type="text"
                       value={formData.qualifications.position}
                       onChange={(e) => handleInputChange('qualifications', 'position', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -245,8 +302,8 @@ function App() {
                     <textarea
                       value={formData.qualifications.ausbildung}
                       onChange={(e) => handleInputChange('qualifications', 'ausbildung', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      rows="2"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm resize-y"
+                      rows="3"
                       required
                     />
                   </div>
@@ -255,8 +312,8 @@ function App() {
                     <textarea
                       value={formData.qualifications.berufserfahrung}
                       onChange={(e) => handleInputChange('qualifications', 'berufserfahrung', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      rows="2"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm resize-y"
+                      rows="3"
                       required
                     />
                   </div>
@@ -265,8 +322,8 @@ function App() {
                     <textarea
                       value={formData.qualifications.staerken}
                       onChange={(e) => handleInputChange('qualifications', 'staerken', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      rows="2"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm resize-y"
+                      rows="3"
                       required
                     />
                   </div>
@@ -276,7 +333,7 @@ function App() {
                       type="text"
                       value={formData.qualifications.sprachen}
                       onChange={(e) => handleInputChange('qualifications', 'sprachen', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -285,8 +342,8 @@ function App() {
                     <textarea
                       value={formData.qualifications.motivation}
                       onChange={(e) => handleInputChange('qualifications', 'motivation', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      rows="2"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm resize-y"
+                      rows="3"
                       required
                     />
                   </div>
@@ -294,12 +351,14 @@ function App() {
               </div>
 
               {/* Style Selection */}
-              <div className="border-l-4 border-purple-500 pl-4">
-                <h3 className="text-lg font-medium text-gray-700 mb-4">🎨 Bewerbungsstil</h3>
+              <div className="border-l-4 border-purple-500 pl-3 sm:pl-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  🎨 Bewerbungsstil
+                </h3>
                 <select
                   value={formData.stil}
                   onChange={(e) => setFormData(prev => ({...prev, stil: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-base sm:text-sm"
                 >
                   <option value="Formell">Formell</option>
                   <option value="Kreativ">Kreativ</option>
@@ -308,16 +367,18 @@ function App() {
               </div>
 
               {/* Company Data Section */}
-              <div className="border-l-4 border-orange-500 pl-4">
-                <h3 className="text-lg font-medium text-gray-700 mb-4">🏢 Firmendaten</h3>
-                <div className="space-y-4">
+              <div className="border-l-4 border-orange-500 pl-3 sm:pl-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  🏢 Firmendaten
+                </h3>
+                <div className="space-y-3 sm:space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Firmenname</label>
                     <input
                       type="text"
                       value={formData.company.firmenname}
                       onChange={(e) => handleInputChange('company', 'firmenname', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -327,7 +388,7 @@ function App() {
                       type="text"
                       value={formData.company.ansprechpartner}
                       onChange={(e) => handleInputChange('company', 'ansprechpartner', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -337,7 +398,7 @@ function App() {
                       type="text"
                       value={formData.company.firmenadresse}
                       onChange={(e) => handleInputChange('company', 'firmenadresse', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-base sm:text-sm"
                       required
                     />
                   </div>
@@ -345,17 +406,17 @@ function App() {
               </div>
 
               {/* GDPR Checkbox */}
-              <div className="border-l-4 border-red-500 pl-4">
+              <div className="border-l-4 border-red-500 pl-3 sm:pl-4">
                 <div className="flex items-start space-x-3">
                   <input
                     type="checkbox"
                     id="gdpr"
                     checked={formData.gdpr_consent}
                     onChange={(e) => setFormData(prev => ({...prev, gdpr_consent: e.target.checked}))}
-                    className="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="mt-1 h-5 w-5 sm:h-4 sm:w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                     required
                   />
-                  <label htmlFor="gdpr" className="text-sm text-gray-700">
+                  <label htmlFor="gdpr" className="text-sm text-gray-700 leading-relaxed">
                     <strong>DSGVO-Zustimmung (Pflichtfeld):</strong> Ich stimme zu, dass meine Angaben zur Erstellung einer Bewerbung verwendet werden.
                   </label>
                 </div>
@@ -365,21 +426,20 @@ function App() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 sm:py-3 px-4 sm:px-6 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-base sm:text-sm"
               >
                 {isLoading ? (
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="mb-1 text-sm">Bewerbung wird generiert…</span>
-                    <DotPulse size={40} speed={1.3} color="#ffffff" />
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <span className="text-sm">Bewerbung wird generiert…</span>
+                    <DotPulse size={30} speed={1.3} color="#ffffff" />
                   </div>
                 ) : (
                   "🚀 Bewerbung generieren"
                 )}
               </button>
 
-
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                   {error}
                 </div>
               )}
@@ -387,103 +447,109 @@ function App() {
           </div>
 
           {/* Preview Section */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">📄 Bewerbungsvorschau</h2>
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 lg:p-8">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">
+              📄 Bewerbungsvorschau
+            </h2>
           
-            <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
+            <div id="applicationPreview" className="border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6 min-h-64 sm:min-h-96 bg-gray-50">
               {generatedApplication ? (
                 <div className="space-y-4">
                   <div
-                    className="generated-html"
-                    style={{ lineHeight: "1.8", marginTop: "1em" }}
+                    className="generated-html overflow-x-auto"
+                    style={{ 
+                      lineHeight: "1.6", 
+                      fontSize: "14px",
+                      maxWidth: "100%"
+                    }}
                     dangerouslySetInnerHTML={{ __html: generatedApplication }}
                   ></div>
           
-                  <div className="flex gap-3 pt-6 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-gray-200">
                     <button
                       onClick={() => setShowEmailModal(true)}
-                      className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+                      className="w-full sm:w-auto bg-green-600 text-white py-2.5 sm:py-2 px-4 rounded-lg hover:bg-green-700 font-medium transition-colors duration-200 text-sm"
                     >
                       📧 Als E-Mail senden
                     </button>
                     <button
                       onClick={exportToPDF}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+                      className="w-full sm:flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 sm:py-2 px-4 rounded-lg font-medium transition-colors duration-200 text-sm"
                     >
                       📄 Als PDF herunterladen
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-16">
-                  <div className="text-6xl mb-4">📝</div>
-                  <p className="text-lg">Ihre generierte Bewerbung wird hier angezeigt</p>
-                  <p className="text-sm mt-2">Füllen Sie das Formular aus und klicken Sie auf "Bewerbung generieren"</p>
+                <div className="text-center text-gray-500 py-8 sm:py-16">
+                  <div className="text-4xl sm:text-6xl mb-2 sm:mb-4">📝</div>
+                  <p className="text-base sm:text-lg font-medium">Ihre generierte Bewerbung wird hier angezeigt</p>
+                  <p className="text-xs sm:text-sm mt-2 px-4">Füllen Sie das Formular aus und klicken Sie auf "Bewerbung generieren"</p>
                 </div>
               )}
             </div>
           </div>
-          
-          {/* Email Modal */}
-          {showEmailModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
-                <h2 className="text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
-          
-                <div className="mb-2 text-sm">
-                  <strong>Von:</strong> noreply@bewerbungsai.com
-                </div>
-
-                <input
-                  type="email"
-                  value={emailTo}
-                  onChange={(e) => setEmailTo(e.target.value)}
-                  placeholder="An (Empfänger)"
-                  className="mb-2 w-full border p-2 rounded"
-                />
-                         
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  placeholder="Betreff"
-                  className="mb-2 w-full border p-2 rounded"
-                />
-                    
-                <div className="text-sm text-yellow-600 mb-2"> 
-                  ⚠️ Hinweis: Die Bewerbung wird technisch von <strong>noreply@bewerbungsai.com</strong> versendet.
-                  Diese Adresse erscheint als Absender. Es wird empfohlen, die E-Mail zunächst an die eigene Adresse zu senden,
-                  bevor sie an ein Unternehmen weitergeleitet wird.
-                </div>
-
-           
-          
-                <div className="text-sm text-gray-600 mb-4">
-                  📎 Anhang: <strong>Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf</strong>
-                </div>
-          
-                <div className="flex justify-between mt-4">
-                  <button
-                    onClick={() => setShowEmailModal(false)}
-                    className="bg-gray-400 text-white px-4 py-2 rounded"
-                  >
-                    Abbrechen
-                  </button>
-                  <button
-                    onClick={sendAsEmail}
-                    className="bg-green-600 text-white px-4 py-2 rounded"
-                  >
-                    Senden
-                  </button>
-                </div>
-          
-                {emailStatus && (
-                  <div className="mt-3 text-sm text-blue-600">{emailStatus}</div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
+          
+        {/* Email Modal */}
+        {showEmailModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-lg w-full max-w-md mx-auto">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
+        
+              <div className="mb-3 text-sm text-gray-600">
+                <strong>Von:</strong> noreply@bewerbungsai.com
+              </div>
+
+              <input
+                type="email"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                placeholder="An (Empfänger)"
+                className="mb-3 w-full border border-gray-300 p-3 sm:p-2 rounded-md text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+                       
+              <input
+                type="text"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Betreff"
+                className="mb-3 w-full border border-gray-300 p-3 sm:p-2 rounded-md text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+                  
+              <div className="text-xs sm:text-sm text-yellow-600 mb-3 p-2 bg-yellow-50 rounded border border-yellow-200"> 
+                ⚠️ <strong>Hinweis:</strong> Die Bewerbung wird technisch von <strong>noreply@bewerbungsai.com</strong> versendet.
+                Diese Adresse erscheint als Absender. Es wird empfohlen, die E-Mail zunächst an die eigene Adresse zu senden,
+                bevor sie an ein Unternehmen weitergeleitet wird.
+              </div>
+        
+              <div className="text-xs sm:text-sm text-gray-600 mb-4 p-2 bg-gray-50 rounded">
+                📎 <strong>Anhang:</strong> Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf
+              </div>
+        
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4">
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="w-full sm:w-auto bg-gray-400 text-white px-4 py-2.5 sm:py-2 rounded-lg font-medium text-sm hover:bg-gray-500 transition-colors"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={sendAsEmail}
+                  className="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 sm:py-2 rounded-lg font-medium text-sm hover:bg-green-700 transition-colors"
+                >
+                  Senden
+                </button>
+              </div>
+        
+              {emailStatus && (
+                <div className="mt-3 text-sm text-blue-600 p-2 bg-blue-50 rounded border border-blue-200">
+                  {emailStatus}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
