@@ -1,3 +1,4 @@
+import { DotPulse } from '@uiball/loaders';
 import React, { useState } from "react";
 import "./App.css";
 import axios from "axios";
