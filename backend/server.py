@@ -145,13 +145,19 @@ async def generate_application(request: ApplicationRequest):
             </style>
         </head>
         <body>
-            <div>{request.personal.vorname} {request.personal.nachname}</div>
-            <div>{request.personal.adresse}</div>
-            <div>{request.personal.email} | {request.personal.telefon}</div>
+            <div style="text-align: right;">{request.personal.vorname} {request.personal.nachname}</div>
+            <div style="text-align: right;">{request.personal.adresse}</div>
+            <div style="text-align: right;">{request.personal.email}</div>
+            <div style="text-align: right;">{request.personal.telefon}</div>
+    
             <br>
+    
             <div>{request.company.firmenname}</div>
             <div>{request.company.ansprechpartner}</div>
             <div>{request.company.firmenadresse}</div>
+    
+            <div style="text-align: right;">{datetime.utcnow().strftime('%d.%m.%Y')}</div>
+    
             <br>
             <div><strong>Bewerbung um eine Stelle als {request.qualifications.position}</strong></div>
             <br>
@@ -163,6 +169,7 @@ async def generate_application(request: ApplicationRequest):
         </body>
     </html>
     """
+
     return ApplicationResponse(id=str(uuid.uuid4()), bewerbungstext=html, created_at=datetime.utcnow())
 
 @api_router.post("/export-pdf-from-html")
