@@ -17,6 +17,102 @@ body {
   line-height: 1.8;
 }
 
+/* Mobile-optimized application preview */
+#applicationPreview {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Generated HTML content styling */
+.generated-html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Mobile-specific styles for generated content */
+@media (max-width: 768px) {
+  #applicationPreview {
+    padding: 0.75rem !important;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 200px !important;
+  }
+  
+  .generated-html {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Style all elements inside generated HTML for mobile */
+  .generated-html * {
+    max-width: 100% !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Specific styling for common HTML elements in generated content */
+  .generated-html p {
+    margin-bottom: 0.75rem;
+    text-align: justify;
+    hyphens: auto;
+  }
+  
+  .generated-html h1, .generated-html h2, .generated-html h3 {
+    font-size: 16px !important;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+  
+  .generated-html table {
+    width: 100% !important;
+    font-size: 12px !important;
+    border-collapse: collapse;
+  }
+  
+  .generated-html td, .generated-html th {
+    padding: 0.25rem !important;
+    font-size: 12px !important;
+    word-break: break-word;
+  }
+  
+  /* Address and contact info formatting */
+  .generated-html address {
+    font-style: normal;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Extra small screens (phones in portrait) */
+@media (max-width: 480px) {
+  #applicationPreview {
+    padding: 0.5rem !important;
+    font-size: 13px;
+    margin: 0 -0.25rem;
+  }
+  
+  .generated-html {
+    font-size: 13px !important;
+  }
+  
+  .generated-html h1, .generated-html h2, .generated-html h3 {
+    font-size: 15px !important;
+  }
+  
+  .generated-html table {
+    font-size: 11px !important;
+  }
+  
+  .generated-html td, .generated-html th {
+    font-size: 11px !important;
+    padding: 0.2rem !important;
+  }
+}
+
 /* Print styles for PDF export */
 @media print {
   body * {
@@ -68,6 +164,13 @@ input:focus, textarea:focus, select:focus {
   background: #a8a8a8;
 }
 
+/* Mobile scrollbar (thinner for touch devices) */
+@media (max-width: 768px) {
+  #applicationPreview::-webkit-scrollbar {
+    width: 3px;
+  }
+}
+
 /* Responsive improvements */
 @media (max-width: 768px) {
   .container {
@@ -91,5 +194,21 @@ input:focus, textarea:focus, select:focus {
   }
   50% {
     opacity: .5;
+  }
+}
+
+/* Prevent text overflow in buttons on mobile */
+@media (max-width: 640px) {
+  button {
+    word-break: break-word;
+    hyphens: auto;
+  }
+}
+
+/* Ensure modal content is readable on mobile */
+@media (max-width: 480px) {
+  .fixed .bg-white {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
   }
 }
