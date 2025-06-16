@@ -482,10 +482,15 @@ function App() {
 
         {emailStatus && (
           <div className="mt-3 text-sm text-blue-600">{emailStatus}</div>
-        )}
+          )}
+        </div>
       </div>
     </div>
-  )}
+  );
+}
+
+export default App;
+
 
 
 export default App;
