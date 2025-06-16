@@ -386,8 +386,15 @@ function App() {
           </div>
 
           {/* Preview Section */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">📄 Bewerbungsvorschau</h2>
+          <div className="mt-6 bg-white p-6 rounded-xl shadow-md">
+            <h2 className="text-xl font-semibold mb-4">📄 Bewerbungsvorschau</h2>
+            
+            <div
+              className="[&>p]:mb-5 text-justify text-gray-800"
+              dangerouslySetInnerHTML={{ __html: generatedText }}
+            />
+          </div>
+
           
             <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
               {generatedApplication ? (
