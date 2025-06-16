@@ -1,5 +1,5 @@
 import { DotPulse } from '@uiball/loaders';
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import axios from "axios";
 
@@ -42,6 +42,18 @@ function App() {
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
+
+  // Refs für Layout-Stabilisierung
+  const previewContainerRef = useRef(null);
+  const [containerHeight, setContainerHeight] = useState(null);
+
+  // Layout-Stabilisierung beim ersten Render
+  useEffect(() => {
+    if (previewContainerRef.current && !containerHeight) {
+      const height = previewContainerRef.current.offsetHeight;
+      setContainerHeight(Math.max(height, 600)); // Mindestens 600px
+    }
+  }, []);
 
   const handleInputChange = (section, field, value) => {
     setFormData(prev => ({
@@ -150,7 +162,7 @@ function App() {
           <p className="text-sm sm:text-base lg:text-lg text-gray-600 px-2">Erstellen Sie professionelle Bewerbungsschreiben mit KI-Unterstützung</p>
         </div>
 
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8" style={{ alignItems: 'stretch' }}>
           {/* Form Section */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 order-1 lg:order-1">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">📋 Bewerbungsdaten eingeben</h2>
@@ -382,20 +394,35 @@ function App() {
             </form>
           </div>
 
-          {/* Preview Section */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 order-2 lg:order-2">
+          {/* Preview Section - MIT LAYOUT-STABILISIERUNG */}
+          <div 
+            ref={previewContainerRef}
+            className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 order-2 lg:order-2 flex flex-col"
+            style={{ 
+              minHeight: containerHeight || '600px',
+              height: 'auto'
+            }}
+          >
             <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">📄 Bewerbungsvorschau</h2>
           
-            <div id="applicationPreview" className="border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6 min-h-64 sm:min-h-96 bg-gray-50">
+            <div 
+              id="applicationPreview" 
+              className="border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6 bg-gray-50 flex-1"
+              style={{
+                minHeight: '400px',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word'
+              }}
+            >
               {generatedApplication ? (
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-3 sm:space-y-4 h-full flex flex-col">
                   <div
-                    className="generated-html text-xs sm:text-sm lg:text-base overflow-auto"
+                    className="generated-html text-xs sm:text-sm lg:text-base overflow-auto flex-1"
                     style={{ lineHeight: "1.6", marginTop: "1em" }}
                     dangerouslySetInnerHTML={{ __html: generatedApplication }}
                   ></div>
           
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-gray-200 mt-auto">
                     <button
                       onClick={() => setShowEmailModal(true)}
                       className="w-full sm:w-auto bg-green-600 text-white py-2 px-3 sm:px-4 rounded hover:bg-green-700 text-xs sm:text-sm font-medium transition-colors duration-200"
@@ -411,7 +438,7 @@ function App() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-8 sm:py-16">
+                <div className="text-center text-gray-500 py-8 sm:py-16 flex flex-col justify-center h-full">
                   <div className="text-4xl sm:text-6xl mb-2 sm:mb-4">📝</div>
                   <p className="text-sm sm:text-lg font-medium">Ihre generierte Bewerbung wird hier angezeigt</p>
                   <p className="text-xs sm:text-sm mt-1 sm:mt-2 px-2">Füllen Sie das Formular aus und klicken Sie auf "Bewerbung generieren"</p>
