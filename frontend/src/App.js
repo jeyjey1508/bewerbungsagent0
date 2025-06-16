@@ -393,108 +393,101 @@ function App() {
               className="text-justify text-gray-800 whitespace-pre-line"
               dangerouslySetInnerHTML={{ __html: generatedApplication }}
             ></div>
-
-
           </div>
 
           
-            <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
-              {generatedApplication ? (
-                <div className="space-y-4">
-                  <div
-                    className="generated-html"
-                    style={{ lineHeight: "1.8", marginTop: "1em" }}
-                    dangerouslySetInnerHTML={{ __html: generatedApplication }}
-                  ></div>
-          
-                  <div className="flex gap-3 pt-6 border-t border-gray-200">
-                    <button
-                      onClick={() => setShowEmailModal(true)}
-                      className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
-                    >
-                      📧 Als E-Mail senden
-                    </button>
-                    <button
-                      onClick={exportToPDF}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      📄 Als PDF herunterladen
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-16">
-                  <div className="text-6xl mb-4">📝</div>
-                  <p className="text-lg">Ihre generierte Bewerbung wird hier angezeigt</p>
-                  <p className="text-sm mt-2">Füllen Sie das Formular aus und klicken Sie auf "Bewerbung generieren"</p>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Email Modal */}
-          {showEmailModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
-                <h2 className="text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
-          
-                <div className="mb-2 text-sm">
-                  <strong>Von:</strong> noreply@bewerbungsai.com
-                </div>
+<>
+  <div id="applicationPreview" className="border border-gray-200 rounded-lg p-6 min-h-96 bg-gray-50">
+    {generatedApplication ? (
+      <div className="space-y-4">
+        <div
+          className="generated-html"
+          style={{ lineHeight: "1.8", marginTop: "1em" }}
+          dangerouslySetInnerHTML={{ __html: generatedApplication }}
+        ></div>
 
-                <input
-                  type="email"
-                  value={emailTo}
-                  onChange={(e) => setEmailTo(e.target.value)}
-                  placeholder="An (Empfänger)"
-                  className="mb-2 w-full border p-2 rounded"
-                />
-                         
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  placeholder="Betreff"
-                  className="mb-2 w-full border p-2 rounded"
-                />
-                    
-                <div className="text-sm text-yellow-600 mb-2"> 
-                  ⚠️ Hinweis: Die Bewerbung wird technisch von <strong>noreply@bewerbungsai.com</strong> versendet.
-                  Diese Adresse erscheint als Absender. Es wird empfohlen, die E-Mail zunächst an die eigene Adresse zu senden,
-                  bevor sie an ein Unternehmen weitergeleitet wird.
-                </div>
-
-           
-          
-                <div className="text-sm text-gray-600 mb-4">
-                  📎 Anhang: <strong>Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf</strong>
-                </div>
-          
-                <div className="flex justify-between mt-4">
-                  <button
-                    onClick={() => setShowEmailModal(false)}
-                    className="bg-gray-400 text-white px-4 py-2 rounded"
-                  >
-                    Abbrechen
-                  </button>
-                  <button
-                    onClick={sendAsEmail}
-                    className="bg-green-600 text-white px-4 py-2 rounded"
-                  >
-                    Senden
-                  </button>
-                </div>
-          
-                {emailStatus && (
-                  <div className="mt-3 text-sm text-blue-600">{emailStatus}</div>
-                )}
-              </div>
-            </div>
-          )}
+        <div className="flex gap-3 pt-6 border-t border-gray-200">
+          <button
+            onClick={() => setShowEmailModal(true)}
+            className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+          >
+            📧 Als E-Mail senden
+          </button>
+          <button
+            onClick={exportToPDF}
+            className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
+          >
+            📄 Als PDF herunterladen
+          </button>
         </div>
       </div>
+    ) : (
+      <div className="text-center text-gray-500 py-16">
+        <div className="text-6xl mb-4">📝</div>
+        <p className="text-lg">Ihre generierte Bewerbung wird hier angezeigt</p>
+        <p className="text-sm mt-2">Füllen Sie das Formular aus und klicken Sie auf "Bewerbung generieren"</p>
+      </div>
+    )}
+  </div>
+
+  {/* Email Modal */}
+  {showEmailModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">📧 Bewerbung per E-Mail senden</h2>
+
+        <div className="mb-2 text-sm">
+          <strong>Von:</strong> noreply@bewerbungsai.com
+        </div>
+
+        <input
+          type="email"
+          value={emailTo}
+          onChange={(e) => setEmailTo(e.target.value)}
+          placeholder="An (Empfänger)"
+          className="mb-2 w-full border p-2 rounded"
+        />
+
+        <input
+          type="text"
+          value={emailSubject}
+          onChange={(e) => setEmailSubject(e.target.value)}
+          placeholder="Betreff"
+          className="mb-2 w-full border p-2 rounded"
+        />
+
+        <div className="text-sm text-yellow-600 mb-2"> 
+          ⚠️ Hinweis: Die Bewerbung wird technisch von <strong>noreply@bewerbungsai.com</strong> versendet.
+          Diese Adresse erscheint als Absender. Es wird empfohlen, die E-Mail zunächst an die eigene Adresse zu senden,
+          bevor sie an ein Unternehmen weitergeleitet wird.
+        </div>
+
+        <div className="text-sm text-gray-600 mb-4">
+          📎 Anhang: <strong>Bewerbung_{formData.personal.vorname}_{formData.personal.nachname}.pdf</strong>
+        </div>
+
+        <div className="flex justify-between mt-4">
+          <button
+            onClick={() => setShowEmailModal(false)}
+            className="bg-gray-400 text-white px-4 py-2 rounded"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={sendAsEmail}
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Senden
+          </button>
+        </div>
+
+        {emailStatus && (
+          <div className="mt-3 text-sm text-blue-600">{emailStatus}</div>
+        )}
+      </div>
     </div>
-  );
-}
+  )}
+</>
+
 
 export default App;
