@@ -390,9 +390,10 @@ function App() {
             <h2 className="text-xl font-semibold mb-4">📄 Bewerbungsvorschau</h2>
             
             <div
-              className="[&>p]:mb-5 text-justify text-gray-800"
+              className="text-justify text-gray-800 whitespace-pre-line"
               dangerouslySetInnerHTML={{ __html: generatedApplication }}
             ></div>
+
 
           </div>
 
