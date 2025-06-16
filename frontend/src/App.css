@@ -17,7 +17,7 @@ body {
   line-height: 1.8;
 }
 
-/* ===== MOBILE-OPTIMIERTE PREVIEW STYLES ===== */
+/* ===== IMPROVED MOBILE-OPTIMIZED PREVIEW STYLES ===== */
 
 /* Basis-Styling für alle Geräte */
 #applicationPreview {
@@ -27,8 +27,9 @@ body {
   min-height: 500px;
   height: auto;
   transition: none;
-  overflow-x: hidden; /* Verhindert horizontalen Scroll */
+  overflow-x: hidden;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Generated HTML content styling - Desktop */
@@ -38,6 +39,7 @@ body {
   font-size: 14px;
   line-height: 1.6;
   color: #374151;
+  box-sizing: border-box;
 }
 
 .generated-html * {
@@ -74,7 +76,7 @@ body {
 /* ===== TABLET OPTIMIERUNG (768px bis 1024px) ===== */
 @media (min-width: 768px) and (max-width: 1024px) {
   #applicationPreview {
-    padding: 1.5rem !important;
+    padding: 1.25rem !important;
     font-size: 15px;
     min-height: 450px;
   }
@@ -92,13 +94,16 @@ body {
 /* ===== MOBILE OPTIMIERUNG (max-width: 768px) ===== */
 @media (max-width: 768px) {
   #applicationPreview {
-    padding: 1rem !important;
-    font-size: 16px; /* Größere Schrift für bessere Lesbarkeit */
+    padding: 0.75rem !important;
+    font-size: 16px;
     line-height: 1.7;
     min-height: 400px !important;
     margin: 0 !important;
     border-radius: 0.5rem;
     background-color: #fefefe;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .generated-html {
@@ -107,66 +112,88 @@ body {
     word-break: break-word;
     overflow-wrap: break-word;
     color: #374151;
+    max-width: 100%;
+    width: 100%;
   }
   
   .generated-html p {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
     text-align: left;
     hyphens: auto;
     font-size: 16px;
     line-height: 1.7;
+    max-width: 100%;
+    word-break: break-word;
   }
   
   .generated-html h1, .generated-html h2, .generated-html h3 {
-    font-size: 18px !important;
+    font-size: 17px !important;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     line-height: 1.5;
     color: #1f2937;
+    word-break: break-word;
   }
   
   .generated-html div {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     font-size: 16px;
     line-height: 1.7;
+    max-width: 100%;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   
-  /* Spezielle Styling für Adressen und Kontaktdaten */
+  /* Kontaktdaten und Adressen - bessere mobile Darstellung */
   .generated-html div[style*="text-align: right"] {
-    text-align: left !important; /* Rechtsbündige Elemente links ausrichten */
-    margin-bottom: 0.5rem;
+    text-align: left !important;
+    margin-bottom: 0.25rem;
     font-size: 15px;
+    line-height: 1.6;
+    color: #4b5563;
   }
   
-  /* Styling für Firmeninformationen */
-  .generated-html div:not([style*="text-align"]) {
+  /* Firmeninformationen */
+  .generated-html div:not([style*="text-align"]):not([class]) {
     font-size: 16px;
     line-height: 1.6;
+    margin-bottom: 0.25rem;
   }
   
   /* Betreff-Zeile hervorheben */
-  .generated-html div strong {
+  .generated-html div strong,
+  .generated-html strong {
     font-size: 17px !important;
     font-weight: 700;
     color: #111827;
     display: block;
-    margin: 1.5rem 0 1rem 0;
+    margin: 1rem 0 0.75rem 0;
+    line-height: 1.4;
   }
   
   /* Unterschrift-Bereich */
   .generated-html .signature,
   .generated-html div[class*="signature"] {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  /* Datum rechtsbündig aber mobile-freundlich */
+  .generated-html div[style*="text-align: right"]:last-of-type {
+    text-align: right !important;
+    font-size: 14px;
+    margin: 1rem 0;
+    color: #6b7280;
   }
 }
 
-/* ===== EXTRA KLEINE BILDSCHIRME (max-width: 480px) ===== */
+/* ===== KLEINE MOBILE GERÄTE (max-width: 480px) ===== */
 @media (max-width: 480px) {
   #applicationPreview {
-    padding: 0.75rem !important;
+    padding: 0.5rem !important;
     font-size: 15px;
-    margin: 0 -0.25rem;
+    margin: 0;
     min-height: 350px !important;
     border-radius: 0.375rem;
   }
@@ -179,31 +206,42 @@ body {
   .generated-html p {
     font-size: 15px;
     line-height: 1.65;
-    margin-bottom: 1rem;
+    margin-bottom: 0.875rem;
   }
   
   .generated-html h1, .generated-html h2, .generated-html h3 {
-    font-size: 17px !important;
+    font-size: 16px !important;
+    margin-bottom: 0.5rem;
   }
   
   .generated-html div {
     font-size: 15px;
     line-height: 1.65;
+    margin-bottom: 0.375rem;
   }
   
   .generated-html div[style*="text-align: right"] {
     font-size: 14px;
+    margin-bottom: 0.25rem;
   }
   
-  .generated-html div strong {
+  .generated-html div strong,
+  .generated-html strong {
     font-size: 16px !important;
+    margin: 0.75rem 0 0.5rem 0;
+  }
+  
+  .generated-html .signature,
+  .generated-html div[class*="signature"] {
+    margin-top: 1.25rem;
+    font-size: 15px;
   }
 }
 
 /* ===== SEHR KLEINE BILDSCHIRME (max-width: 360px) ===== */
 @media (max-width: 360px) {
   #applicationPreview {
-    padding: 0.5rem !important;
+    padding: 0.375rem !important;
     font-size: 14px;
     min-height: 320px !important;
   }
@@ -216,19 +254,63 @@ body {
   .generated-html p {
     font-size: 14px;
     line-height: 1.6;
-    margin-bottom: 0.875rem;
+    margin-bottom: 0.75rem;
   }
   
   .generated-html h1, .generated-html h2, .generated-html h3 {
-    font-size: 16px !important;
+    font-size: 15px !important;
+    margin-bottom: 0.5rem;
   }
   
   .generated-html div {
     font-size: 14px;
+    margin-bottom: 0.25rem;
   }
   
-  .generated-html div strong {
+  .generated-html div[style*="text-align: right"] {
+    font-size: 13px;
+  }
+  
+  .generated-html div strong,
+  .generated-html strong {
     font-size: 15px !important;
+    margin: 0.5rem 0;
+  }
+}
+
+/* ===== VERBESSERTE CONTAINER-ANPASSUNGEN ===== */
+@media (max-width: 768px) {
+  /* Preview Container selbst */
+  .bg-white.rounded-xl.shadow-lg.p-4.sm\\:p-6.lg\\:p-8 {
+    padding: 0.75rem !important;
+    margin: 0 !important;
+  }
+  
+  /* Sicherstellen, dass der Container nicht überläuft */
+  .flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 > div {
+    min-height: 500px !important;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  div[class*="order-2"] {
+    min-height: 500px !important;
+    flex: 1 !important;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .bg-white.rounded-xl.shadow-lg.p-4.sm\\:p-6.lg\\:p-8 {
+    padding: 0.5rem !important;
+  }
+  
+  .flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 > div {
+    min-height: 450px !important;
+  }
+  
+  div[class*="order-2"] {
+    min-height: 450px !important;
   }
 }
 
@@ -241,6 +323,7 @@ body {
   min-height: 600px !important;
   display: flex !important;
   flex-direction: column !important;
+  max-width: 100%;
 }
 
 div[class*="order-2"] {
@@ -252,27 +335,6 @@ div[class*="order-2"] {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-}
-
-/* ===== MOBILE CONTAINER ANPASSUNGEN ===== */
-@media (max-width: 768px) {
-  .flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 > div {
-    min-height: 500px !important;
-  }
-  
-  div[class*="order-2"] {
-    min-height: 500px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 > div {
-    min-height: 450px !important;
-  }
-  
-  div[class*="order-2"] {
-    min-height: 450px !important;
-  }
 }
 
 /* ===== SCROLLBAR STYLING ===== */
@@ -385,26 +447,12 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* ===== ZUSÄTZLICHE MOBILE VERBESSERUNGEN ===== */
-
-/* Container-Padding für bessere mobile Darstellung */
-@media (max-width: 768px) {
-  .bg-white.rounded-xl.shadow-lg.p-4.sm\\:p-6.lg\\:p-8 {
-    padding: 1rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .bg-white.rounded-xl.shadow-lg.p-4.sm\\:p-6.lg\\:p-8 {
-    padding: 0.75rem !important;
-  }
-}
-
-/* Verbesserte Touch-Targets für mobile Geräte */
+/* ===== VERBESSERTE TOUCH-TARGETS FÜR MOBILE GERÄTE ===== */
 @media (max-width: 768px) {
   button {
     min-height: 44px;
     padding: 12px 16px;
+    font-size: 16px; /* Verhindert Zoom auf iOS */
   }
   
   input, textarea, select {
@@ -413,7 +461,7 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* Optimierung für Landscape-Modus auf Handys */
+/* ===== OPTIMIERUNG FÜR LANDSCAPE-MODUS AUF HANDYS ===== */
 @media (max-width: 768px) and (orientation: landscape) {
   #applicationPreview {
     min-height: 300px !important;
@@ -421,5 +469,48 @@ input:focus, textarea:focus, select:focus {
   
   .flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 > div {
     min-height: 350px !important;
+  }
+}
+
+/* ===== ZUSÄTZLICHE MOBILE VERBESSERUNGEN FÜR BESSERE LESBARKEIT ===== */
+@media (max-width: 768px) {
+  /* Verbesserte Abstände zwischen Textblöcken */
+  .generated-html br {
+    line-height: 0.5;
+  }
+  
+  /* Bessere Sichtbarkeit von wichtigen Elementen */
+  .generated-html div[style*="text-align: right"]:first-child {
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  /* Konsistente Abstände für alle Div-Elemente */
+  .generated-html div + div {
+    margin-top: 0.125rem;
+  }
+  
+  /* Spezielle Behandlung für den Bewerbungsbetreff */
+  .generated-html div:has(strong),
+  .generated-html div strong:only-child {
+    background-color: #f8fafc;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    border-left: 3px solid #3b82f6;
+  }
+}
+
+/* ===== FINALE MOBILE TOUCH-UPS ===== */
+@media (max-width: 480px) {
+  /* Noch kompaktere Darstellung auf sehr kleinen Geräten */
+  .generated-html div + br + div {
+    margin-top: 0.5rem;
+  }
+  
+  /* Optimierte Button-Größen */
+  .flex.flex-col.sm\\:flex-row.gap-2.sm\\:gap-3 button {
+    padding: 10px 12px;
+    font-size: 14px;
+    min-height: 42px;
   }
 }
