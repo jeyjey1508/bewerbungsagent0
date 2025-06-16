@@ -33,6 +33,30 @@ body {
   overflow-x: hidden;
 }
 
+/* ULTIMATE Layout-Stabilisierung - Verhindert jegliche Layout-Sprünge */
+.flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 {
+  align-items: stretch !important;
+}
+
+.flex.flex-col.lg\\:grid.lg\\:grid-cols-2.gap-4.sm\\:gap-6.lg\\:gap-8 > div {
+  min-height: 600px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Spezifische Stabilisierung für Preview-Container */
+div[class*="order-2"] {
+  min-height: 600px !important;
+  flex: 1 !important;
+}
+
+/* Extra Sicherheit für alle Container */
+.container.mx-auto.px-3.sm\\:px-4.py-4.sm\\:py-8 {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 /* Mobile-specific styles for generated content */
 @media (max-width: 768px) {
   #applicationPreview {
