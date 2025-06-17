@@ -53,6 +53,8 @@ class ApplicationRequest(BaseModel):
     company: CompanyData
     stil: str = "Formell"
     gdpr_consent: bool
+    includeUnterschrift: bool = False  # ✅ Hier hinzufügen
+
 
 class ApplicationResponse(BaseModel):
     id: str
@@ -164,6 +166,8 @@ async def generate_application(request: ApplicationRequest):
             {content_html}
             <div class="signature">
                 <p>Mit freundlichen Grüßen</p>
+                <br><br><br>
+                {"<p>Platz für Unterschrift</p>" if request.includeUnterschrift else ""}
                 <p>{request.personal.vorname} {request.personal.nachname}</p>
             </div>
         </body>
