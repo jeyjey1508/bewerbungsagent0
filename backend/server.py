@@ -53,7 +53,7 @@ class ApplicationRequest(BaseModel):
     company: CompanyData
     stil: str = "Formell"
     gdpr_consent: bool
-    includeUnterschrift: bool = False  # ✅ Hier hinzufügen
+    includeUnterschrift: bool = False
 
 
 class ApplicationResponse(BaseModel):
@@ -137,6 +137,12 @@ async def generate_application(request: ApplicationRequest):
     paragraphs = [f"<p>{p.strip()}</p>" for p in clean.split("\n\n") if p.strip()]
     content_html = "".join(paragraphs)
 
+    # ✅ KORRIGIERTE UNTERSCHRIFT-LOGIK
+    if request.includeUnterschrift:
+        signature_space = "<br><br><br>"  # 3 Zeilen Platz nur wenn Checkbox aktiviert
+    else:
+        signature_space = ""  # Kein extra Platz wenn Checkbox nicht aktiviert
+
     html = f"""
     <html>
         <head>
@@ -166,8 +172,7 @@ async def generate_application(request: ApplicationRequest):
             {content_html}
             <div class="signature">
                 <p>Mit freundlichen Grüßen</p>
-                <br><br><br>
-                {"<br><br><br>" if request.includeUnterschrift else ""}
+                {signature_space}
                 <p>{request.personal.vorname} {request.personal.nachname}</p>
             </div>
         </body>
@@ -247,4 +252,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
