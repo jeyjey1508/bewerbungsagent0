@@ -73,7 +73,7 @@ class StatusCheckCreate(BaseModel):
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
     prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
-Nutze maximal 250 Wörter.
+Nutze maximal 200 Wörter.
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
@@ -148,7 +148,7 @@ async def generate_application(request: ApplicationRequest):
         <head>
             <meta charset='utf-8'>
             <style>
-                body {{ font-family: Arial; font-size: 12pt; line-height: 1.5; margin: 1.5cm; }}
+                body {{ font-family: Arial; font-size: 12pt; line-height: 1.5; margin: 1cm; }}
                 .signature {{ margin-top: 30px; }}
             </style>
         </head>
