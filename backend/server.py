@@ -166,8 +166,7 @@ async def generate_application(request: ApplicationRequest):
             {content_html}
             <div class="signature">
                 <p>Mit freundlichen Grüßen</p>
-                <br><br><br>
-                {"<br><br><br>" if request.includeUnterschrift else ""}
+                { "<br><br><br>" if request.includeUnterschrift else "" }
                 <p>{request.personal.vorname} {request.personal.nachname}</p>
             </div>
         </body>
