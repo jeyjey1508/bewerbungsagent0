@@ -374,15 +374,16 @@ function App() {
                 <div className="flex items-start space-x-3">
                   <input
                     type="checkbox"
-                    checked={formData.includeUnterschrift}
-                    onChange={(e) => setFormData(prev => ({ ...prev, includeUnterschrift: e.target.checked }))}
-                    className="mr-2 w-5 h-5 accent-purple-600"
+                    checked={formData.gdpr_consent}
+                    onChange={(e) => setFormData(prev => ({ ...prev, gdpr_consent: e.target.checked }))}
+                    className="mr-2 w-5 h-5 accent-red-500"
                   />
                   <label htmlFor="gdpr" className="text-xs sm:text-sm text-gray-700">
                     <strong>DSGVO-Zustimmung (Pflichtfeld):</strong> Ich stimme zu, dass meine Angaben zur Erstellung einer Bewerbung verwendet werden.
                   </label>
                 </div>
               </div>
+
 
               {/* Submit Button */}
               <button
