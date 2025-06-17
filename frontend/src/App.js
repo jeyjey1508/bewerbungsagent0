@@ -33,6 +33,12 @@ function App() {
     gdpr_consent: false
   });
 
+  const [formData, setFormData] = useState({
+    // andere Felder ...
+    stil: "Formell",
+    includeUnterschrift: false,
+  });
+
   const [generatedApplication, setGeneratedApplication] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -305,16 +311,30 @@ function App() {
               {/* Style Selection */}
               <div className="border-l-4 border-purple-500 pl-3 sm:pl-4">
                 <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">🎨 Bewerbungsstil</h3>
+                
                 <select
                   value={formData.stil}
-                  onChange={(e) => setFormData(prev => ({...prev, stil: e.target.value}))}
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  onChange={(e) => setFormData(prev => ({ ...prev, stil: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
                 >
                   <option value="Formell">Formell</option>
                   <option value="Kreativ">Kreativ</option>
                   <option value="Locker">Locker</option>
                 </select>
+              
+                <label className="flex items-center space-x-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formData.includeUnterschrift}
+                    onChange={(e) =>
+                      setFormData(prev => ({ ...prev, includeUnterschrift: e.target.checked }))
+                    }
+                    className="accent-purple-500"
+                  />
+                  <span>Platz für Unterschrift lassen</span>
+                </label>
               </div>
+
 
               {/* Company Data Section */}
               <div className="border-l-4 border-orange-500 pl-3 sm:pl-4">
