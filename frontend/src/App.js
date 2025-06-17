@@ -30,14 +30,10 @@ function App() {
       firmenadresse: "Moneyweg 99, 46556 München"
     },
     stil: "Formell",
+    includeUnterschrift: false,  // <- Checkbox-Feld hinzugefügt
     gdpr_consent: false
   });
 
-  const [formData, setFormData] = useState({
-    // andere Felder ...
-    stil: "Formell",
-    includeUnterschrift: false,
-  });
 
   const [generatedApplication, setGeneratedApplication] = useState("");
   const [isLoading, setIsLoading] = useState(false);
