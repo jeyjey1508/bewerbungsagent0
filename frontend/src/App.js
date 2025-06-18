@@ -38,119 +38,59 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLizenzCheck = async () => {
-    try {
-      const response = await axios.post(`${API}/verify-key`, { key: lizenzKey });
-      if (response.data.valid) {
-        localStorage.setItem("verifiedKey", lizenzKey);
-        setIsVerified(true);
-      } else {
-        alert("❌ Ungültiger Lizenzschlüssel");
-      }
-    } catch (err) {
-      alert("Fehler bei der Lizenzprüfung");
-    }
-  };
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem("verifiedKey");
-    if (savedKey) {
-      axios.post(`${API}/verify-key`, { key: savedKey })
-        .then((res) => {
-          if (res.data.valid) setIsVerified(true);
-        });
-    }
-  }, []);
-
-  if (!isVerified) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4">
-        <h2 className="text-lg font-semibold mb-4">🔐 Lizenzschlüssel eingeben</h2>
-        <input
-          type="text"
-          placeholder="Lizenzschlüssel"
-          value={lizenzKey}
-          onChange={(e) => setLizenzKey(e.target.value)}
-          className="p-2 border rounded mb-3 w-full max-w-sm"
-        />
-        <button
-          onClick={handleLizenzCheck}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Verifizieren
-        </button>
-      </div>
-    );
-  }
-
-  // ⬇️ Danach folgt dein restlicher App-Code
-
-
-
+  // Email Modal States
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailFrom, setEmailFrom] = useState("");
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
 
+  // License handling - CONSOLIDATED VERSION
   const [lizenzKey, setLizenzKey] = useState(localStorage.getItem("lizenzKey") || "");
-  const [isVerified, setIsVerified] = useState(!!lizenzKey);
-  
-  const handleLizenzCheck = async () => {
+  const [isVerified, setIsVerified] = useState(false);
+  const [checkingLicense, setCheckingLicense] = useState(true);
+
+  const handleLizenzCheck = async (keyToCheck = lizenzKey) => {
     try {
       const res = await fetch("https://api.gumroad.com/v2/licenses/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          product_permalink: "DEIN_PRODUKT_SLUG",
-          license_key: lizenzKey
+          product_permalink: "DEIN_PRODUKT_SLUG", // 👈 REPLACE WITH YOUR ACTUAL PRODUCT SLUG
+          license_key: keyToCheck
         }),
       });
       const data = await res.json();
   
       if (data.success) {
-        localStorage.setItem("lizenzKey", lizenzKey);
+        localStorage.setItem("lizenzKey", keyToCheck);
         setIsVerified(true);
+        setCheckingLicense(false);
       } else {
-        alert("❌ Ungültiger Lizenzschlüssel");
+        setIsVerified(false);
+        setCheckingLicense(false);
+        if (keyToCheck === lizenzKey) {
+          alert("❌ Ungültiger Lizenzschlüssel");
+        }
       }
     } catch (err) {
-      alert("Fehler bei der Lizenzprüfung.");
+      setIsVerified(false);
+      setCheckingLicense(false);
+      if (keyToCheck === lizenzKey) {
+        alert("Fehler bei der Lizenzprüfung.");
+      }
     }
   };
 
-
-    // Lizenz-Handling (vor dem return)
-  const [licenseKey, setLicenseKey] = useState(localStorage.getItem("licenseKey") || "");
-  const [licenseValid, setLicenseValid] = useState(false);
-  const [checkingLicense, setCheckingLicense] = useState(true);
-  
   useEffect(() => {
-    if (licenseKey) {
-      fetch("/api/verify-license", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: licenseKey })
-      })
-        .then(res => res.json())
-        .then(data => {
-          setLicenseValid(data.valid);
-          setCheckingLicense(false);
-        })
-        .catch(() => {
-          setLicenseValid(false);
-          setCheckingLicense(false);
-        });
+    const savedKey = localStorage.getItem("lizenzKey");
+    if (savedKey) {
+      setLizenzKey(savedKey);
+      handleLizenzCheck(savedKey);
     } else {
       setCheckingLicense(false);
     }
-  }, [licenseKey]);
-  
-  function handleLicenseSubmit() {
-    localStorage.setItem("licenseKey", licenseKey);
-    window.location.reload(); // Seite neu laden, damit Validierung erneut läuft
-  }
-
+  }, []);
 
   // Refs für Layout-Stabilisierung
   const previewContainerRef = useRef(null);
@@ -196,115 +136,136 @@ function App() {
   };
 
   const copyToClipboard = () => {
-  const tempElement = document.createElement("div");
+    const tempElement = document.createElement("div");
 
-  // Nur den Inhalt zwischen <body>...</body> extrahieren
-  const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
+    // Nur den Inhalt zwischen <body>...</body> extrahieren
+    const bodyMatch = generatedApplication.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    tempElement.innerHTML = bodyMatch ? bodyMatch[1] : generatedApplication;
 
-  // Entferne evtl. vorhandene <style> oder <script>-Elemente, nur zur Sicherheit
-  const stylesAndScripts = tempElement.querySelectorAll("style, script");
-  stylesAndScripts.forEach(el => el.remove());
+    // Entferne evtl. vorhandene <style> oder <script>-Elemente, nur zur Sicherheit
+    const stylesAndScripts = tempElement.querySelectorAll("style, script");
+    stylesAndScripts.forEach(el => el.remove());
 
-  const text = tempElement.innerText;
+    const text = tempElement.innerText;
 
-  navigator.clipboard.writeText(text)
-    .then(() => alert("Bewerbungstext in die Zwischenablage kopiert!"))
-    .catch(() => alert("Fehler beim Kopieren des Textes."));
-};
+    navigator.clipboard.writeText(text)
+      .then(() => alert("Bewerbungstext in die Zwischenablage kopiert!"))
+      .catch(() => alert("Fehler beim Kopieren des Textes."));
+  };
 
   const exportToPDF = async () => {
-  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
+    const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
 
-  const blob = await axios.post(`${API}/export-pdf-from-html`, {
-    html: generatedApplication,
-    filename: filename
-  }, {
-    responseType: 'blob'
-  });
-
-  const url = window.URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-};
-
-  const sendAsEmail = async () => {
-  if (!emailTo || !emailSubject) {
-    setEmailStatus("Bitte alle Felder ausfüllen.");
-    return;
-  }
-
-  const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
-
-  try {
-    await axios.post(`${API}/send-email`, {
-      to: emailTo,
-      from: emailFrom,
-      subject: emailSubject,
+    const blob = await axios.post(`${API}/export-pdf-from-html`, {
       html: generatedApplication,
-      filename,
+      filename: filename
+    }, {
+      responseType: 'blob'
     });
 
-    setEmailStatus("E-Mail erfolgreich gesendet!");
-    setTimeout(() => {
-      setShowEmailModal(false);
-      setEmailFrom("");
-      setEmailTo("");
-      setEmailSubject("");
-      setEmailStatus("");
-    }, 2500);
-  } catch (err) {
-    setEmailStatus("Fehler beim Senden: " + (err.response?.data?.detail || err.message));
+    const url = window.URL.createObjectURL(new Blob([blob.data], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const sendAsEmail = async () => {
+    if (!emailTo || !emailSubject) {
+      setEmailStatus("Bitte alle Felder ausfüllen.");
+      return;
+    }
+
+    const filename = `Bewerbung_${formData.personal.vorname}_${formData.personal.nachname}.pdf`;
+
+    try {
+      await axios.post(`${API}/send-email`, {
+        to: emailTo,
+        from: emailFrom,
+        subject: emailSubject,
+        html: generatedApplication,
+        filename,
+      });
+
+      setEmailStatus("E-Mail erfolgreich gesendet!");
+      setTimeout(() => {
+        setShowEmailModal(false);
+        setEmailFrom("");
+        setEmailTo("");
+        setEmailSubject("");
+        setEmailStatus("");
+      }, 2500);
+    } catch (err) {
+      setEmailStatus("Fehler beim Senden: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  // License check screen
+  if (checkingLicense) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <DotPulse size={40} speed={1.3} color="#3B82F6" />
+          <p className="mt-4 text-gray-600">🔄 Lizenz wird geprüft...</p>
+        </div>
+      </div>
+    );
   }
-};
 
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4">🔐 Lizenz erforderlich</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Bitte gib deinen Lizenzschlüssel ein oder kaufe einen über Gumroad:
+          </p>
+          <input
+            type="text"
+            className="w-full border p-2 rounded mb-3"
+            value={lizenzKey}
+            onChange={(e) => setLizenzKey(e.target.value)}
+            placeholder="z. B. GUM-XXXX-XXXX-XXXX"
+          />
+          <button
+            onClick={() => handleLizenzCheck()}
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          >
+            Lizenz prüfen
+          </button>
+          <p className="text-xs text-gray-500 mt-4">
+            Noch keinen Lizenzschlüssel? 
+            <a href="https://dein-gumroad-link.com" className="text-blue-600 underline ml-1">
+              Jetzt kaufen
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Main application UI
   return (
-  {checkingLicense ? (
-  <div className="p-6 text-center">🔄 Lizenz wird geprüft...</div>
-) : !licenseValid ? (
-  <div className="min-h-screen flex items-center justify-center p-4">
-    <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 border border-gray-200">
-      <h2 className="text-xl font-semibold mb-4">🔐 Lizenz erforderlich</h2>
-      <p className="text-sm text-gray-600 mb-4">Bitte gib deinen Lizenzschlüssel ein oder kaufe einen über Gumroad:</p>
-      <input
-        type="text"
-        className="w-full border p-2 rounded mb-3"
-        value={licenseKey}
-        onChange={(e) => setLicenseKey(e.target.value)}
-        placeholder="z. B. GUM-XXXX-XXXX-XXXX"
-      />
-      <button
-        onClick={handleLicenseSubmit}
-        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-      >
-        Lizenz prüfen
-      </button>
-      <p className="text-xs text-gray-500 mt-4">
-        Noch keinen Lizenzschlüssel? <a href="https://dein-gumroad-link.com" className="text-blue-600 underline">Jetzt kaufen</a>
-      </p>
-    </div>
-  </div>
-) : (
-  <>
-    {/* Dein bisheriger App-Content kommt hier rein */}
-
-    
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-4">🔧 Bewerbungsgenerator</h1>
-          <p className="text-sm sm:text-base lg:text-lg text-gray-600 px-2">Erstellen Sie professionelle Bewerbungsschreiben mit KI-Unterstützung</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-4">
+            🔧 Bewerbungsgenerator
+          </h1>
+          <p className="text-sm sm:text-base lg:text-lg text-gray-600 px-2">
+            Erstellen Sie professionelle Bewerbungsschreiben mit KI-Unterstützung
+          </p>
         </div>
 
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8" style={{ alignItems: 'stretch' }}>
           {/* Form Section */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 order-1 lg:order-1">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">📋 Bewerbungsdaten eingeben</h2>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">
+              📋 Bewerbungsdaten eingeben
+            </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Personal Data Section */}
@@ -468,7 +429,6 @@ function App() {
                 </label>
               </div>
 
-
               {/* Company Data Section */}
               <div className="border-l-4 border-orange-500 pl-3 sm:pl-4">
                 <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">🏢 Firmendaten</h3>
@@ -520,7 +480,6 @@ function App() {
                   </label>
                 </div>
               </div>
-
 
               {/* Submit Button */}
               <button
