@@ -56,7 +56,7 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          product_permalink: "DEIN_PRODUKT_SLUG", // 👈 REPLACE WITH YOUR ACTUAL PRODUCT SLUG
+          product_permalink: "gsfpdd", // 👈 REPLACE WITH YOUR ACTUAL PRODUCT SLUG
           license_key: keyToCheck
         }),
       });
