@@ -6,6 +6,28 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+if (!isVerified) {
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4">
+      <h2 className="text-lg font-semibold mb-4">🔐 Lizenzschlüssel eingeben</h2>
+      <input
+        type="text"
+        placeholder="Lizenzschlüssel"
+        value={lizenzKey}
+        onChange={(e) => setLizenzKey(e.target.value)}
+        className="p-2 border rounded mb-3 w-full max-w-sm"
+      />
+      <button
+        onClick={handleLizenzCheck}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        Verifizieren
+      </button>
+    </div>
+  );
+}
+
+
 function App() {
   const [formData, setFormData] = useState({
     personal: {
@@ -44,6 +66,33 @@ function App() {
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
+
+  const [lizenzKey, setLizenzKey] = useState(localStorage.getItem("lizenzKey") || "");
+  const [isVerified, setIsVerified] = useState(!!lizenzKey);
+  
+  const handleLizenzCheck = async () => {
+    try {
+      const res = await fetch("https://api.gumroad.com/v2/licenses/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_permalink: "DEIN_PRODUKT_SLUG",
+          license_key: lizenzKey
+        }),
+      });
+      const data = await res.json();
+  
+      if (data.success) {
+        localStorage.setItem("lizenzKey", lizenzKey);
+        setIsVerified(true);
+      } else {
+        alert("❌ Ungültiger Lizenzschlüssel");
+      }
+    } catch (err) {
+      alert("Fehler bei der Lizenzprüfung.");
+    }
+  };
+
 
     // Lizenz-Handling (vor dem return)
   const [licenseKey, setLicenseKey] = useState(localStorage.getItem("licenseKey") || "");
