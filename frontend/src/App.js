@@ -6,34 +6,54 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-if (!isVerified) {
-  return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4">
-      <h2 className="text-lg font-semibold mb-4">🔐 Lizenzschlüssel eingeben</h2>
-      <input
-        type="text"
-        placeholder="Lizenzschlüssel"
-        value={lizenzKey}
-        onChange={(e) => setLizenzKey(e.target.value)}
-        className="p-2 border rounded mb-3 w-full max-w-sm"
-      />
-      <button
-        onClick={handleLizenzCheck}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        Verifizieren
-      </button>
-    </div>
-  );
-}
-
-
 function App() {
+  const [isVerified, setIsVerified] = useState(false);
+  const [lizenzKey, setLizenzKey] = useState("");
+
+  const handleLizenzCheck = () => {
+    // Beispielprüfung – passe das ggf. an
+    if (lizenzKey === "DEIN-LIZENZKEY") {
+      setIsVerified(true);
+      localStorage.setItem("lizenzKey", lizenzKey);
+    } else {
+      alert("Ungültiger Lizenzschlüssel");
+    }
+  };
+
+  useEffect(() => {
+    const gespeicherterKey = localStorage.getItem("lizenzKey");
+    if (gespeicherterKey === "DEIN-LIZENZKEY") {
+      setIsVerified(true);
+    }
+  }, []);
+
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4">
+        <h2 className="text-lg font-semibold mb-4">🔐 Lizenzschlüssel eingeben</h2>
+        <input
+          type="text"
+          placeholder="Lizenzschlüssel"
+          value={lizenzKey}
+          onChange={(e) => setLizenzKey(e.target.value)}
+          className="p-2 border rounded mb-3 w-full max-w-sm"
+        />
+        <button
+          onClick={handleLizenzCheck}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Verifizieren
+        </button>
+      </div>
+    );
+  }
+
+  // Ab hier kannst du deine App normal fortsetzen:
   const [formData, setFormData] = useState({
     personal: {
       vorname: "",
-      nachname: "", 
-      alter: ,
+      nachname: "",
+      alter: "",
       email: "",
       telefon: "",
       adresse: ""
@@ -41,7 +61,7 @@ function App() {
     qualifications: {
       position: "",
       ausbildung: "",
-      berufserfahrung: "", 
+      berufserfahrung: "",
       staerken: "",
       sprachen: "",
       motivation: ""
@@ -51,15 +71,16 @@ function App() {
       ansprechpartner: "",
       firmenadresse: ""
     },
-    stil: "",
-    includeUnterschrift: false,  // <- Checkbox-Feld hinzugefügt
+    stil: "Formell",
+    includeUnterschrift: false,
     gdpr_consent: false
   });
-
 
   const [generatedApplication, setGeneratedApplication] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  // ... und so weiter
+
 
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailFrom, setEmailFrom] = useState("");
