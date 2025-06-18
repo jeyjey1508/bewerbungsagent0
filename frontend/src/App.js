@@ -45,6 +45,38 @@ function App() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
 
+    // Lizenz-Handling (vor dem return)
+  const [licenseKey, setLicenseKey] = useState(localStorage.getItem("licenseKey") || "");
+  const [licenseValid, setLicenseValid] = useState(false);
+  const [checkingLicense, setCheckingLicense] = useState(true);
+  
+  useEffect(() => {
+    if (licenseKey) {
+      fetch("/api/verify-license", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: licenseKey })
+      })
+        .then(res => res.json())
+        .then(data => {
+          setLicenseValid(data.valid);
+          setCheckingLicense(false);
+        })
+        .catch(() => {
+          setLicenseValid(false);
+          setCheckingLicense(false);
+        });
+    } else {
+      setCheckingLicense(false);
+    }
+  }, [licenseKey]);
+  
+  function handleLicenseSubmit() {
+    localStorage.setItem("licenseKey", licenseKey);
+    window.location.reload(); // Seite neu laden, damit Validierung erneut läuft
+  }
+
+
   // Refs für Layout-Stabilisierung
   const previewContainerRef = useRef(null);
   const [containerHeight, setContainerHeight] = useState(null);
@@ -156,6 +188,36 @@ function App() {
 };
 
   return (
+  {checkingLicense ? (
+  <div className="p-6 text-center">🔄 Lizenz wird geprüft...</div>
+) : !licenseValid ? (
+  <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 border border-gray-200">
+      <h2 className="text-xl font-semibold mb-4">🔐 Lizenz erforderlich</h2>
+      <p className="text-sm text-gray-600 mb-4">Bitte gib deinen Lizenzschlüssel ein oder kaufe einen über Gumroad:</p>
+      <input
+        type="text"
+        className="w-full border p-2 rounded mb-3"
+        value={licenseKey}
+        onChange={(e) => setLicenseKey(e.target.value)}
+        placeholder="z. B. GUM-XXXX-XXXX-XXXX"
+      />
+      <button
+        onClick={handleLicenseSubmit}
+        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+      >
+        Lizenz prüfen
+      </button>
+      <p className="text-xs text-gray-500 mt-4">
+        Noch keinen Lizenzschlüssel? <a href="https://dein-gumroad-link.com" className="text-blue-600 underline">Jetzt kaufen</a>
+      </p>
+    </div>
+  </div>
+) : (
+  <>
+    {/* Dein bisheriger App-Content kommt hier rein */}
+
+    
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
