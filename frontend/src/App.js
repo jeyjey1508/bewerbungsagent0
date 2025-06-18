@@ -237,7 +237,7 @@ function App() {
           </button>
           <p className="text-xs text-gray-500 mt-4">
             Noch keinen Lizenzschlüssel? 
-            <a href="https://dein-gumroad-link.com" className="text-blue-600 underline ml-1">
+            <a href="https://businessjeremy.gumroad.com/l/gsfpdd" className="text-blue-600 underline ml-1">
               Jetzt kaufen
             </a>
           </p>
