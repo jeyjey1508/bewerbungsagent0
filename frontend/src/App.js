@@ -7,23 +7,60 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 function App() {
-  const [isVerified, setIsVerified] = useState(false);
   const [lizenzKey, setLizenzKey] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [formData, setFormData] = useState({
+    personal: {
+      vorname: "",
+      nachname: "", 
+      alter: "",
+      email: "",
+      telefon: "",
+      adresse: ""
+    },
+    qualifications: {
+      position: "",
+      ausbildung: "",
+      berufserfahrung: "", 
+      staerken: "",
+      sprachen: "",
+      motivation: ""
+    },
+    company: {
+      firmenname: "",
+      ansprechpartner: "",
+      firmenadresse: ""
+    },
+    stil: "Formell",
+    includeUnterschrift: false,
+    gdpr_consent: false
+  });
 
-  const handleLizenzCheck = () => {
-    // Beispielprüfung – passe das ggf. an
-    if (lizenzKey === "DEIN-LIZENZKEY") {
-      setIsVerified(true);
-      localStorage.setItem("lizenzKey", lizenzKey);
-    } else {
-      alert("Ungültiger Lizenzschlüssel");
+  const [generatedApplication, setGeneratedApplication] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLizenzCheck = async () => {
+    try {
+      const response = await axios.post(`${API}/verify-key`, { key: lizenzKey });
+      if (response.data.valid) {
+        localStorage.setItem("verifiedKey", lizenzKey);
+        setIsVerified(true);
+      } else {
+        alert("❌ Ungültiger Lizenzschlüssel");
+      }
+    } catch (err) {
+      alert("Fehler bei der Lizenzprüfung");
     }
   };
 
   useEffect(() => {
-    const gespeicherterKey = localStorage.getItem("lizenzKey");
-    if (gespeicherterKey === "DEIN-LIZENZKEY") {
-      setIsVerified(true);
+    const savedKey = localStorage.getItem("verifiedKey");
+    if (savedKey) {
+      axios.post(`${API}/verify-key`, { key: savedKey })
+        .then((res) => {
+          if (res.data.valid) setIsVerified(true);
+        });
     }
   }, []);
 
@@ -48,38 +85,8 @@ function App() {
     );
   }
 
-  // Ab hier kannst du deine App normal fortsetzen:
-  const [formData, setFormData] = useState({
-    personal: {
-      vorname: "",
-      nachname: "",
-      alter: "",
-      email: "",
-      telefon: "",
-      adresse: ""
-    },
-    qualifications: {
-      position: "",
-      ausbildung: "",
-      berufserfahrung: "",
-      staerken: "",
-      sprachen: "",
-      motivation: ""
-    },
-    company: {
-      firmenname: "",
-      ansprechpartner: "",
-      firmenadresse: ""
-    },
-    stil: "Formell",
-    includeUnterschrift: false,
-    gdpr_consent: false
-  });
+  // ⬇️ Danach folgt dein restlicher App-Code
 
-  const [generatedApplication, setGeneratedApplication] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  // ... und so weiter
 
 
   const [showEmailModal, setShowEmailModal] = useState(false);
