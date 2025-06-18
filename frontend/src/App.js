@@ -220,7 +220,7 @@ function App() {
         <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">🔐 Lizenz erforderlich</h2>
           <p className="text-sm text-gray-600 mb-4">
-            Bitte gib deinen Lizenzschlüssel ein oder kaufe einen über Gumroad:
+            Bitte gib deinen Lizenzschlüssel ein oder kaufe einen über <a href="https://businessjeremy.gumroad.com/l/gsfpdd" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-semibold">Gumroad</a>:
           </p>
           <input
             type="text"
