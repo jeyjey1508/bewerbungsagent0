@@ -76,9 +76,6 @@ async def generate_application_with_cerebras(request: ApplicationRequest) -> str
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 Nutze maximal 200 Wörter.
 
-if request.jobanzeige:
-    prompt += f"\n\nSTELLENANZEIGE:\n{request.jobanzeige}\n"
-
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
 - Alter: {request.personal.alter}
@@ -98,6 +95,12 @@ FIRMENDATEN:
 - Firmenname: {request.company.firmenname}
 - Ansprechpartner: {request.company.ansprechpartner}
 - Firmenadresse: {request.company.firmenadresse}
+"""
+
+if request.jobanzeige:
+    prompt += f"\n\nSTELLENANZEIGE (optional):\n{request.jobanzeige}\n"
+
+prompt += "\nErstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist."
 
 Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist.
 """
