@@ -72,7 +72,7 @@ class StatusCheckCreate(BaseModel):
 
 # === KI-Funktion ===
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
-prompt = f"""
+    prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 Nutze maximal 200 Wörter.
 
@@ -97,15 +97,12 @@ FIRMENDATEN:
 - Firmenadresse: {request.company.firmenadresse}
 """
 
-# Füge die Stellenanzeige nur ergänzend hinzu
-if request.jobanzeige:
-    prompt += f"\n\nSTELLENANZEIGE (optional):\n{request.jobanzeige}"
+    # Füge die Stellenanzeige nur ergänzend hinzu
+    if request.jobanzeige:
+        prompt += f"\n\nSTELLENANZEIGE (optional):\n{request.jobanzeige}"
 
-prompt += "\nErstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist."
+    prompt += "\nErstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist."
 
-
-Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist.
-"""
     headers = {
         "Authorization": f"Bearer {os.environ['CEREBRAS_API_KEY']}",
         "Content-Type": "application/json"
@@ -152,13 +149,18 @@ async def generate_application(request: ApplicationRequest):
     else:
         signature_space = ""  # Kein extra Platz wenn Checkbox nicht aktiviert
 
+    # CSS als separate Variable definieren
+    css_styles = """
+        body { font-family: Arial; font-size: 12pt; line-height: 1.5; margin: 1cm; }
+        .signature { margin-top: 30px; }
+    """
+
     html = f"""
     <html>
         <head>
             <meta charset='utf-8'>
             <style>
-                body {{ font-family: Arial; font-size: 12pt; line-height: 1.5; margin: 1cm; }}
-                .signature {{ margin-top: 30px; }}
+                {css_styles}
             </style>
         </head>
         <body>
