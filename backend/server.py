@@ -72,7 +72,7 @@ class StatusCheckCreate(BaseModel):
 
 # === KI-Funktion ===
 async def generate_application_with_cerebras(request: ApplicationRequest) -> str:
-    prompt = f"""
+prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 Nutze maximal 200 Wörter.
 
@@ -97,10 +97,12 @@ FIRMENDATEN:
 - Firmenadresse: {request.company.firmenadresse}
 """
 
+# Füge die Stellenanzeige nur ergänzend hinzu
 if request.jobanzeige:
-    prompt += f"\n\nSTELLENANZEIGE (optional):\n{request.jobanzeige}\n"
+    prompt += f"\n\nSTELLENANZEIGE (optional):\n{request.jobanzeige}"
 
 prompt += "\nErstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist."
+
 
 Erstelle nur den Bewerbungstext. Verwende Absätze und schreibe keine Grußformel, wenn sie schon enthalten ist.
 """
