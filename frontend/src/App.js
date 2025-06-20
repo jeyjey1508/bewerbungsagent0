@@ -27,7 +27,7 @@ function App() {
     company: {
       firmenname: "",
       ansprechpartner: "",
-      firmenadresse: ""
+      firmenadresse: "",
       jobanzeige: "",
     },
     stil: "Formell",
