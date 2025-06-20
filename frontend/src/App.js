@@ -28,6 +28,7 @@ function App() {
       firmenname: "",
       ansprechpartner: "",
       firmenadresse: ""
+      jobanzeige: "",
     },
     stil: "Formell",
     includeUnterschrift: false,
@@ -462,6 +463,21 @@ function App() {
                       className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       required
                     />
+                  </div>
+                  {/* Jobanzeige hinzufügen */}
+                  <div className="border-l-4 border-yellow-500 pl-4">
+                    <h3 className="text-lg font-medium text-gray-700 mb-4">📄 Jobanzeige (optional)</h3>
+                    <textarea
+                      maxLength={700}
+                      placeholder="Optional: Kopiere hier den Text der Stellenanzeige rein"
+                      value={formData.jobanzeige || ""}
+                      onChange={(e) => setFormData(prev => ({ ...prev, jobanzeige: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      rows="4"
+                    />
+                    <p className="text-sm text-gray-400 mt-1 text-right">
+                      {formData.jobanzeige?.length || 0} / 700 Zeichen
+                    </p>
                   </div>
                 </div>
               </div>
