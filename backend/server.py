@@ -51,6 +51,7 @@ class ApplicationRequest(BaseModel):
     personal: PersonalData
     qualifications: Qualifications
     company: CompanyData
+    jobanzeige: str = ""
     stil: str = "Formell"
     gdpr_consent: bool
     includeUnterschrift: bool = False
@@ -74,6 +75,9 @@ async def generate_application_with_cerebras(request: ApplicationRequest) -> str
     prompt = f"""
 Du bist ein Experte für deutsche Bewerbungsschreiben. Erstelle ein Bewerbungsschreiben im Stil: {request.stil}.
 Nutze maximal 200 Wörter.
+
+if request.jobanzeige:
+    prompt += f"\n\nSTELLENANZEIGE:\n{request.jobanzeige}\n"
 
 PERSÖNLICHE DATEN:
 - Name: {request.personal.vorname} {request.personal.nachname}
