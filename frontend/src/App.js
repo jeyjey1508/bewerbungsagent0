@@ -9,20 +9,21 @@ import axios from "axios";
 
 
 
-function App() {
-  const [darkMode, setDarkMode] = useState(() =>
-    localStorage.getItem("theme") === "dark"
-  );
+// function App() {
+//   const [darkMode, setDarkMode] = useState(() =>
+//     localStorage.getItem("theme") === "dark"
+//   );
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
+//   useEffect(() => {
+//     if (darkMode) {
+//       document.documentElement.classList.add("dark");
+//       localStorage.setItem("theme", "dark");
+//     } else {
+//       document.documentElement.classList.remove("dark");
+//       localStorage.setItem("theme", "light");
+//     }
+//   }, [darkMode]);
+// }
 
 
 
