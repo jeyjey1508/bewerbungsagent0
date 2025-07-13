@@ -3,6 +3,33 @@ import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import axios from "axios";
 
+
+
+
+
+
+import { useEffect, useState } from "react";
+
+function App() {
+  const [darkMode, setDarkMode] = useState(() =>
+    localStorage.getItem("theme") === "dark"
+  );
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+
+
+
+
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
