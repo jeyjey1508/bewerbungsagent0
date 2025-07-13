@@ -8,7 +8,6 @@ import axios from "axios";
 
 
 
-import { useEffect, useState } from "react";
 
 function App() {
   const [darkMode, setDarkMode] = useState(() =>
