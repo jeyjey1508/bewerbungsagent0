@@ -274,19 +274,39 @@ function App() {
     );
   }
 
-  // Main application UI
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  
+
+// Main application UI
+return (
+  <>
+    {/* Dark Mode Toggle Button oben rechts */}
+    <div className="absolute top-4 right-4 z-50">
+      <button
+        onClick={() => setDarkMode(!darkMode)}
+        className="bg-gray-200 dark:bg-gray-800 p-2 rounded-full shadow hover:scale-105 transition"
+        title="Theme wechseln"
+      >
+        {darkMode ? (
+          <span role="img" aria-label="Light Mode">🌞</span>
+        ) : (
+          <span role="img" aria-label="Dark Mode">🌙</span>
+        )}
+      </button>
+    </div>
+
+    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900"}`}>
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 sm:mb-4">
+          <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 ${darkMode ? "text-white" : "text-gray-800"}`}>
             🔧 Bewerbungsgenerator
           </h1>
-          <p className="text-sm sm:text-base lg:text-lg text-gray-600 px-2">
+          <p className={`text-sm sm:text-base lg:text-lg px-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
             Erstellen Sie professionelle Bewerbungsschreiben mit KI-Unterstützung
           </p>
         </div>
+
+
 
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8" style={{ alignItems: 'stretch' }}>
           {/* Form Section */}
