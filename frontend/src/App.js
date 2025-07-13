@@ -294,7 +294,7 @@ function App() {
 return (
   <>
     {/* Dark Mode Toggle Button oben rechts */}
-    <div className="absolute top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-50">
       <button
         onClick={() => setDarkMode(!darkMode)}
         className="bg-gray-200 dark:bg-gray-800 p-2 rounded-full shadow hover:scale-105 transition"
@@ -309,7 +309,7 @@ return (
     </div>
 
     <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900"}`}>
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="max-w-screen-lg mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 ${darkMode ? "text-white" : "text-gray-800"}`}>
