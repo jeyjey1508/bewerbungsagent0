@@ -531,11 +531,12 @@ return (
                     <textarea
                       maxLength={700}
                       placeholder="Optional: Kopiere hier den Text der Stellenanzeige rein"
-                      value={formData.jobanzeige || ""}
-                      onChange={(e) => setFormData(prev => ({ ...prev, jobanzeige: e.target.value }))}
+                      value={formData.company.jobanzeige || ""}
+                      onChange={(e) => handleInputChange("company", "jobanzeige", e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                       rows="4"
                     />
+
                     <p className="text-sm text-gray-400 mt-1 text-right">
                       {formData.jobanzeige?.length || 0} / 700 Zeichen
                     </p>
